@@ -243,7 +243,7 @@ async def arun_one_episode(
 @gin.configurable
 async def run_async_server(
     sampler: BaseSampler[Observation, AgentAction] = BaseSampler(),
-    action_order: Literal["simutaneous", "round-robin", "random"] = "round-robin",
+    action_order: Literal["simultaneous", "round-robin", "random"] = "round-robin",
     model_dict: dict[str, str] = {},
     env_agent_combo_list: list[EnvAgentCombo[Observation, AgentAction]] = [],
     omniscient: bool = False,
@@ -305,8 +305,9 @@ async def run_async_server(
             ],
         }
         agents_model_dict = {
-            "agent1": model_dict["agent1"],
-            "agent2": model_dict["agent2"],
+            agent_name: model_name
+            for agent_name, model_name in model_dict.items()
+            if agent_name.startswith("agent")
         }
         env_agent_combo_iter = sampler.sample(
             agent_classes=[
