@@ -108,12 +108,49 @@ async def agenerate(
     for key, value in input_values.items():
         template = template.replace(f"{{{key}}}", str(value))
 
+    # Handle different local and custom model configurations
     if model_name.startswith("custom"):
+        # Custom models with OpenAI-compatible endpoints
+        # Format: custom/<model_name>@<url>
         base_url, api_key = (
             model_name.split("@")[1],
             os.environ.get("CUSTOM_API_KEY", "EMPTY"),
         )
         model_name = model_name.split("@")[0].replace("custom/", "openai/")
+    elif model_name.startswith("lmstudio/"):
+        # LMStudio support
+        # Format: lmstudio/<model_name> or lmstudio/<model_name>@<url>
+        base_url = os.environ.get("LMSTUDIO_BASE_URL", "http://localhost:1234/v1")
+        api_key = os.environ.get("LMSTUDIO_API_KEY", "lm-studio")
+        if "@" in model_name:
+            parts = model_name.split("@")
+            model_name = parts[0].replace("lmstudio/", "openai/")
+            base_url = parts[1]
+        else:
+            model_name = model_name.replace("lmstudio/", "openai/")
+    elif model_name.startswith("ollama/") or model_name.startswith("ollama_chat/"):
+        # Ollama support - LiteLLM has native support for Ollama
+        # Format: ollama/<model_name> or ollama/<model_name>@<url>
+        # LiteLLM will handle the Ollama protocol natively
+        if "@" in model_name:
+            parts = model_name.split("@")
+            model_name = parts[0]
+            base_url = parts[1]
+            api_key = os.environ.get("OLLAMA_API_KEY", "ollama")
+        else:
+            base_url = os.environ.get("OLLAMA_BASE_URL", None)
+            api_key = None
+    elif model_name.startswith("local/"):
+        # Generic local model support with OpenAI-compatible API
+        # Format: local/<model_name> or local/<model_name>@<url>
+        base_url = os.environ.get("LOCAL_MODEL_BASE_URL", "http://localhost:8000/v1")
+        api_key = os.environ.get("LOCAL_MODEL_API_KEY", "local")
+        if "@" in model_name:
+            parts = model_name.split("@")
+            model_name = parts[0].replace("local/", "openai/")
+            base_url = parts[1]
+        else:
+            model_name = model_name.replace("local/", "openai/")
     else:
         base_url = None
         api_key = None
@@ -154,7 +191,7 @@ async def agenerate(
         messages=messages,
         temperature=temperature,
         drop_params=True,
-        api_base=base_url,
+        base_url=base_url,
         api_key=api_key,
     )
     result = response.choices[0].message.content

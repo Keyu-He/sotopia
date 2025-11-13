@@ -43,12 +43,79 @@ The input to `agenerate` are the following:
 
 In this example, we generate a list of the first `n` prime numbers with the `gpt-4o` model. The `ListOfIntOutputParser` is used to parse the output into a list of integers.
 
-### Using custom models
+### Using Local and Custom Models
 
-Apart from using api endpoints from LLM providers like OpenAI, Together AI, Azure, etc., you can also use custom model with OpenAI compatible endpoints.
-You will need to set the model name to `custom/<model_name>@url`, and CUSTOM_API_KEY to the API key of the custom model.
+Apart from using API endpoints from LLM providers like OpenAI, Together AI, Azure, etc., you can also use local models and custom models with OpenAI-compatible endpoints. Sotopia supports multiple local model serving options:
 
-For example, if you want to use the `llama3.2` model for an agent from [Meta](https://www.meta.com/llama/), and you host the model on [LiteLLM](https://github.com/BerriAI/litellm) proxy server (e.g., Proxy running on `http://0.0.0.0:4000`). Then you can set the model name to `model_name="custom/llama3.2:1b@http:0.0.0.0:4000"`
-to call the model in the [`LLMAgent`](/python_API/agents/llm_agent#llmagent).
+#### 1. Ollama Models
+
+[Ollama](https://ollama.ai) provides an easy way to run open-source LLMs locally. LiteLLM has native support for Ollama.
+
+**Format:** `ollama/<model_name>` or `ollama/<model_name>@<url>`
+
+**Example:**
+```python
+model_name="ollama/llama3.2:1b"  # Uses default Ollama port
+# OR with custom URL:
+model_name="ollama/llama3.2:1b@http://localhost:11434"
+```
+
+**Environment Variables:**
+- `OLLAMA_BASE_URL`: Set custom Ollama server URL (default: uses LiteLLM's default)
+- `OLLAMA_API_KEY`: Set API key if needed
+
+For more information, check out `examples/generation_api/ollama_model.py`.
+
+#### 2. LM Studio
+
+[LM Studio](https://lmstudio.ai) is a desktop application for running local LLMs with a user-friendly interface.
+
+**Format:** `lmstudio/<model_name>` or `lmstudio/<model_name>@<url>`
+
+**Example:**
+```python
+model_name="lmstudio/local-model"  # Uses default LM Studio port
+# OR with custom URL:
+model_name="lmstudio/llama-3.2-1b@http://localhost:1234/v1"
+```
+
+**Environment Variables:**
+- `LMSTUDIO_BASE_URL`: Set custom LM Studio server URL (default: `http://localhost:1234/v1`)
+- `LMSTUDIO_API_KEY`: Set API key if needed (default: `lm-studio`)
+
+For more information, check out `examples/generation_api/lmstudio_model.py`.
+
+#### 3. Generic Local Models
+
+For other local model servers with OpenAI-compatible APIs (e.g., vLLM, LocalAI, FastChat, Text Generation WebUI):
+
+**Format:** `local/<model_name>` or `local/<model_name>@<url>`
+
+**Example:**
+```python
+model_name="local/meta-llama/Llama-3.2-1B"  # Uses default local server
+# OR with custom URL:
+model_name="local/meta-llama/Llama-3.2-1B@http://localhost:8000/v1"
+```
+
+**Environment Variables:**
+- `LOCAL_MODEL_BASE_URL`: Set custom local server URL (default: `http://localhost:8000/v1`)
+- `LOCAL_MODEL_API_KEY`: Set API key if needed (default: `local`)
+
+For more information, check out `examples/generation_api/local_model.py`.
+
+#### 4. Custom Models with LiteLLM Proxy
+
+If you host a model on [LiteLLM](https://github.com/BerriAI/litellm) proxy server or another OpenAI-compatible endpoint:
+
+**Format:** `custom/<model_name>@<url>`
+
+**Example:**
+```python
+model_name="custom/llama3.2:1b@http://0.0.0.0:4000"
+```
+
+**Environment Variables:**
+- `CUSTOM_API_KEY`: Set the API key for your custom model
 
 For more information, check out `examples/generation_api/custom_model.py`.
