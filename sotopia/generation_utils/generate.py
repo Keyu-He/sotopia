@@ -557,6 +557,7 @@ async def agenerate_action(
     strict_action_constraint: bool = False,
     custom_template: str | None = None,
     return_prompt_and_response: Literal[False] = False,
+    structured_output: bool = True,
 ) -> AgentAction: ...
 
 
@@ -575,6 +576,7 @@ async def agenerate_action(
     strict_action_constraint: bool = False,
     custom_template: str | None = None,
     return_prompt_and_response: Literal[True] = ...,
+    structured_output: bool = True,
 ) -> tuple[AgentAction, list[dict[str, str]], str]: ...
 
 
@@ -594,6 +596,7 @@ async def agenerate_action(
     strict_action_constraint: bool = False,
     custom_template: str | None = None,
     return_prompt_and_response: bool = False,
+    structured_output: bool = True,
 ) -> AgentAction | tuple[AgentAction, list[dict[str, str]], str]:
     """
     Using langchain to generate an example episode
@@ -686,7 +689,7 @@ async def agenerate_action(
                 ),
                 output_parser=output_parser_obj,
                 temperature=temperature,
-                structured_output=True,
+                structured_output=structured_output,
                 bad_output_process_model=bad_output_process_model,
                 use_fixed_model_version=use_fixed_model_version,
                 return_prompt_and_response=True,
@@ -704,12 +707,31 @@ async def agenerate_action(
                 ),
                 output_parser=output_parser_obj,
                 temperature=temperature,
-                structured_output=True,
+                structured_output=structured_output,
                 bad_output_process_model=bad_output_process_model,
                 use_fixed_model_version=use_fixed_model_version,
                 return_prompt_and_response=False,
             )
     except Exception as e:
+        # If structured_output failed, retry without it
+        if structured_output and "response_schema" in str(e).lower():
+            log.info(f"Retrying without structured_output for model {model_name}")
+            return await agenerate_action(
+                model_name=model_name,
+                history=history,
+                turn_number=turn_number,
+                action_types=action_types,
+                agent=agent,
+                goal=goal,
+                temperature=temperature,
+                script_like=script_like,
+                bad_output_process_model=bad_output_process_model,
+                use_fixed_model_version=use_fixed_model_version,
+                strict_action_constraint=strict_action_constraint,
+                custom_template=custom_template,
+                return_prompt_and_response=return_prompt_and_response,
+                structured_output=False,
+            )
         log.warning(f"Failed to generate action due to {e}")
         action = AgentAction(action_type="none", argument="")
         if return_prompt_and_response:
