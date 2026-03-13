@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 import os
+import logging
 from pathlib import Path
 from typing import Any, Dict, List
 
 import redis
+from redis_om import get_redis_connection
 from rich.logging import RichHandler
 
 from sotopia.agents import LLMAgent
@@ -69,14 +70,23 @@ class UndercoverGameEndEvaluator(SocialGameEndEvaluator):
             msg = "[Game] All Undercovers have been eliminated! Civilians win."
             env.recv_message("Environment", SimpleMessage(message=msg))
 
+            winning_team = [
+                a
+                for a in env.agents
+                if env.role_to_team.get(env.agent_to_role.get(a, ""), "") == "Civilians"
+            ]
+            losing_team = [
+                a
+                for a in env.agents
+                if env.role_to_team.get(env.agent_to_role.get(a, ""), "") != "Civilians"
+            ]
+            n_winners = len(winning_team)
+            n_losers = len(losing_team)
             rewards = {}
-            for agent_name in env.agents:
-                role = env.agent_to_role.get(agent_name, "")
-                team_name = env.role_to_team.get(role, "")
-                if team_name == "Civilians":
-                    rewards[agent_name] = 1.0
-                else:
-                    rewards[agent_name] = -1.0
+            for agent_name in winning_team:
+                rewards[agent_name] = 1.0 / n_winners
+            for agent_name in losing_team:
+                rewards[agent_name] = -1.0 / n_losers if n_losers > 0 else 0.0
             return True, msg, rewards
 
         # 2. Undercovers win if all Civilians are eliminated
@@ -84,14 +94,25 @@ class UndercoverGameEndEvaluator(SocialGameEndEvaluator):
             msg = "[Game] All Civilians have been eliminated! Undercovers win."
             env.recv_message("Environment", SimpleMessage(message=msg))
 
+            winning_team = [
+                a
+                for a in env.agents
+                if env.role_to_team.get(env.agent_to_role.get(a, ""), "")
+                == "Undercover"
+            ]
+            losing_team = [
+                a
+                for a in env.agents
+                if env.role_to_team.get(env.agent_to_role.get(a, ""), "")
+                != "Undercover"
+            ]
+            n_winners = len(winning_team)
+            n_losers = len(losing_team)
             rewards = {}
-            for agent_name in env.agents:
-                role = env.agent_to_role.get(agent_name, "")
-                team_name = env.role_to_team.get(role, "")
-                if team_name == "Undercover":
-                    rewards[agent_name] = 1.0
-                else:
-                    rewards[agent_name] = -1.0
+            for agent_name in winning_team:
+                rewards[agent_name] = 1.0 / n_winners
+            for agent_name in losing_team:
+                rewards[agent_name] = -1.0 / n_losers if n_losers > 0 else 0.0
             return True, msg, rewards
 
         # 3. Undercovers win if exactly 1 Undercover and 1 Civilian remain
@@ -99,14 +120,25 @@ class UndercoverGameEndEvaluator(SocialGameEndEvaluator):
             msg = "[Game] Only 1 Civilian and 1 Undercover remain! Undercover wins."
             env.recv_message("Environment", SimpleMessage(message=msg))
 
+            winning_team = [
+                a
+                for a in env.agents
+                if env.role_to_team.get(env.agent_to_role.get(a, ""), "")
+                == "Undercover"
+            ]
+            losing_team = [
+                a
+                for a in env.agents
+                if env.role_to_team.get(env.agent_to_role.get(a, ""), "")
+                != "Undercover"
+            ]
+            n_winners = len(winning_team)
+            n_losers = len(losing_team)
             rewards = {}
-            for agent_name in env.agents:
-                role = env.agent_to_role.get(agent_name, "")
-                team_name = env.role_to_team.get(role, "")
-                if team_name == "Undercover":
-                    rewards[agent_name] = 1.0
-                else:
-                    rewards[agent_name] = -1.0
+            for agent_name in winning_team:
+                rewards[agent_name] = 1.0 / n_winners
+            for agent_name in losing_team:
+                rewards[agent_name] = -1.0 / n_losers if n_losers > 0 else 0.0
             return True, msg, rewards
 
         # Other cases (e.g. 2v2, 2v1, 1v2): Game continues
@@ -476,3 +508,6 @@ if __name__ == "__main__":
     _env_logger.addHandler(RichHandler())
 
     asyncio.run(main())
+    conn = get_redis_connection()
+    conn.connection_pool.disconnect()
+    conn.close()

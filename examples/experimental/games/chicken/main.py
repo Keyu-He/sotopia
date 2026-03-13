@@ -1,4 +1,4 @@
-"""Launcher for the Rock, Paper, Scissors game."""
+"""Launcher for the Chicken (Hawk-Dove) game."""
 
 from __future__ import annotations
 
@@ -35,7 +35,6 @@ CONFIG_PATH = BASE_DIR / "config.json"
 os.environ.setdefault("REDIS_OM_URL", "redis://:@localhost:6379")
 redis.Redis(host="localhost", port=6379)
 
-# Loggers (configured in main if running standalone)
 _gen_logger = logging.getLogger("sotopia.generation")
 _env_logger = logging.getLogger("sotopia.envs.social_game")
 
@@ -45,51 +44,23 @@ _env_logger = logging.getLogger("sotopia.envs.social_game")
 # ============================================================================
 
 
-class RPSEvaluator(SocialGameEndEvaluator):
+class ChickenEvaluator(SocialGameEndEvaluator):
     def __call__(
         self, turn_number: int, messages: List[Tuple[str, Message]], **kwargs: Any
     ) -> List[Tuple[str, Tuple[Tuple[str, int | float | bool], str]]]:
+        env = kwargs.get("env")
+        if env and env.internal_state.get("game_over", False):
+            scores = env.internal_state.get("final_scores", {})
+            reason = env.internal_state.get("end_reason", "Game over")
+            response: List[Tuple[str, Tuple[Tuple[str, int | float | bool], str]]] = [
+                ("environment", (("terminated", True), reason))
+            ]
+            for idx, name in enumerate(env.agents):
+                score = scores.get(name, 0.0)
+                response.append((f"agent_{idx + 1}", (("complete_rating", score), "")))
+            return response
         if turn_number >= self.max_turn_number:
-            env = kwargs.get("env")
-            if env:
-                scores = env.internal_state.get("scores", {})
-                response: List[
-                    Tuple[str, Tuple[Tuple[str, int | float | bool], str]]
-                ] = [("environment", (("terminated", True), "Max (10) turns reached"))]
-
-                agent_names = list(env.agents)
-                scores_dict = {name: scores.get(name, 0) for name in agent_names}
-
-                # Logic:
-                # Highest score wins (1), Loser (-1). Tie -> 0.
-
-                values = list(scores_dict.values())
-                rewards = {name: 0.0 for name in agent_names}
-
-                if len(values) == 2:
-                    s1, s2 = values[0], values[1]
-                    n1, n2 = agent_names[0], agent_names[1]
-
-                    if s1 > s2:
-                        rewards[n1] = 1.0
-                        rewards[n2] = -1.0
-                    elif s2 > s1:
-                        rewards[n1] = -1.0
-                        rewards[n2] = 1.0
-
-                for agent_name in agent_names:
-                    idx = agent_names.index(agent_name)
-                    key = f"agent_{idx+1}"
-                    raw_score = scores_dict.get(agent_name, 0)
-                    reward = rewards.get(agent_name, 0.0)
-                    response.append(
-                        (
-                            key,
-                            (("complete_rating", reward), f"Final Score: {raw_score}"),
-                        )
-                    )
-                return response
-            return [("environment", (("terminated", True), "Max turns reached"))]
+            return [("environment", (("terminated", True), "Timeout"))]
         return [("environment", (("terminated", False), ""))]
 
 
@@ -98,25 +69,36 @@ class RPSEvaluator(SocialGameEndEvaluator):
 # ============================================================================
 
 
-class RPSActionHandler(ActionHandler):
+class ChickenActionHandler(ActionHandler):
     def handle_action(
         self, env: SocialDeductionGame, agent_name: str, action: AgentAction
     ) -> None:
-        if isinstance(env, RPSEnv) and action.action_type in ["action", "speak"]:
-            move_str = action.argument.lower()
-            current_move = None
-            if "rock" in move_str:
-                current_move = "Rock"
-            elif "paper" in move_str:
-                current_move = "Paper"
-            elif "scissors" in move_str or "scissor" in move_str:
-                current_move = "Scissors"
-
-            if current_move:
-                env.internal_state["current_moves"][agent_name] = current_move
+        if not isinstance(env, ChickenEnv):
+            return
+        if action.action_type not in ["action", "speak"]:
+            return
+        if env.current_state == "Choose":
+            move = action.argument.lower()
+            if "straight" in move:
+                env.internal_state["current_moves"][agent_name] = "straight"
+            elif "swerve" in move:
+                env.internal_state["current_moves"][agent_name] = "swerve"
 
     def get_action_instruction(self, env: SocialDeductionGame, agent_name: str) -> str:
-        return "You are playing Rock-Paper-Scissors. Choose 'action: rock', 'action: paper', or 'action: scissors'. You cannot speak."
+        if not isinstance(env, ChickenEnv):
+            return ""
+        if env.current_state == "Choose":
+            round_num = env.internal_state.get("round", 0) + 1
+            max_rounds = env._config.get("max_rounds", 10)
+            threshold = env._config.get("threshold", 35)
+            scores = env.internal_state.get("scores", {})
+            return (
+                f"Round {round_num}/{max_rounds}. Scores: {scores}. "
+                f"Choose 'swerve' or 'straight'. "
+                f"Both swerve=3,3. One swerves, one straight=1,5. Both straight=0,0. "
+                f"Need {threshold}+ to win; both below {threshold} = both lose."
+            )
+        return ""
 
 
 # ============================================================================
@@ -124,10 +106,9 @@ class RPSActionHandler(ActionHandler):
 # ============================================================================
 
 
-class RPSEnv(SocialDeductionGame):
+class ChickenEnv(SocialDeductionGame):
     def __init__(self, **kwargs: Any) -> None:
-        super().__init__(action_handler=RPSActionHandler(), **kwargs)
-        self.internal_state = {"round": 0, "scores": {}, "current_moves": {}}
+        super().__init__(action_handler=ChickenActionHandler(), **kwargs)
 
     def reset(
         self,
@@ -146,56 +127,75 @@ class RPSEnv(SocialDeductionGame):
             lite=lite,
             include_background_observations=include_background_observations,
         )
-        self.internal_state = {"round": 0, "scores": {}, "current_moves": {}}
-        for agent in self.agents:
-            self.internal_state["scores"][agent] = 0
+        self.internal_state = {
+            "round": 0,
+            "scores": {name: 0 for name in self.agents},
+            "current_moves": {},
+            "game_over": False,
+            "final_scores": {},
+            "end_reason": "",
+        }
         return obs
 
-    async def astep(
-        self, actions: Dict[str, AgentAction] | Dict[str, Dict[str, int | str]]
-    ) -> Tuple[
-        Dict[str, Any],
-        Dict[str, float],
-        Dict[str, bool],
-        Dict[str, bool],
-        Dict[str, Any],
-    ]:
-        if self.action_handler:
-            for agent_name, action in actions.items():
-                if isinstance(action, AgentAction):
-                    self.action_handler.handle_action(self, agent_name, action)
+    def _check_eliminations(self) -> None:
+        if not self._should_transition_state():
+            return
 
-        moves = self.internal_state["current_moves"]
-        if len(moves) == len(self.agents) and len(self.agents) == 2:
+        if self.current_state == "Choose":
+            moves = self.internal_state.get("current_moves", {})
+            if len(moves) < len(self.agents):
+                return
             agents = list(self.agents)
             a1, a2 = agents[0], agents[1]
-            m1, m2 = moves[a1], moves[a2]
+            m1 = moves.get(a1, "swerve")
+            m2 = moves.get(a2, "swerve")
 
-            result, winner = "Draw", None
-            if m1 == m2:
-                result = "Draw"
-            elif (
-                (m1 == "Rock" and m2 == "Scissors")
-                or (m1 == "Scissors" and m2 == "Paper")
-                or (m1 == "Paper" and m2 == "Rock")
-            ):
-                winner = a1
-            else:
-                winner = a2
+            payoff_matrix = self._config.get("payoff_matrix", {})
+            try:
+                payoffs = payoff_matrix[m1][m2]
+                r1, r2 = payoffs[0], payoffs[1]
+            except (KeyError, IndexError):
+                r1, r2 = 0, 0
 
-            r1, r2 = (1, -1) if winner == a1 else (-1, 1) if winner == a2 else (0, 0)
-            result = f"{winner} wins!" if winner else "Draw"
+            scores = self.internal_state["scores"]
+            scores[a1] += r1
+            scores[a2] += r2
 
-            self.internal_state["scores"][a1] += r1
-            self.internal_state["scores"][a2] += r2
-
-            msg = f"Round {self.internal_state['round']+1}: {a1} ({m1}) vs {a2} ({m2}) -> {result}"
-            self.recv_message("Environment", SimpleMessage(message=msg))
-
-            self.internal_state["round"] += 1
+            round_num = self.internal_state["round"] + 1
+            self.internal_state["round"] = round_num
             self.internal_state["current_moves"] = {}
 
-        return await super().astep(actions)
+            self.recv_message(
+                "Environment",
+                SimpleMessage(
+                    message=f"[Round {round_num}] {a1} chose {m1}, {a2} chose {m2}. "
+                    f"Payoff: {a1}={r1}, {a2}={r2}. Scores: {scores}"
+                ),
+            )
+
+            max_rounds = self._config.get("max_rounds", 10)
+            if round_num >= max_rounds:
+                s1, s2 = scores[a1], scores[a2]
+                threshold = self._config.get("threshold", 35)
+                if s1 < threshold and s2 < threshold:
+                    final = {a1: 0.0, a2: 0.0}
+                    reason = f"Game over. Both below {threshold}. Draw. Final: {scores}"
+                elif s1 > s2:
+                    final = {a1: 1.0, a2: -1.0}
+                    reason = f"Game over. {a1} wins! Final: {scores}"
+                elif s2 > s1:
+                    final = {a1: -1.0, a2: 1.0}
+                    reason = f"Game over. {a2} wins! Final: {scores}"
+                else:
+                    final = {a1: 0.0, a2: 0.0}
+                    reason = f"Game over. Tie! Final: {scores}"
+
+                self.internal_state["game_over"] = True
+                self.internal_state["final_scores"] = final
+                self.internal_state["end_reason"] = reason
+                self.recv_message(
+                    "Environment", SimpleMessage(message=f"[Game] {reason}")
+                )
 
 
 # ============================================================================
@@ -204,13 +204,10 @@ class RPSEnv(SocialDeductionGame):
 
 
 def ensure_agent_profile(config: Dict[str, Any]) -> AgentProfile:
-    """Create or retrieve agent profile."""
     name = config.get("name", "")
-    role = config.get("role", "")
     first_name, _, last_name = name.partition(" ")
     if not last_name:
         last_name = ""
-
     try:
         existing = AgentProfile.find(
             (AgentProfile.first_name == first_name)
@@ -220,24 +217,19 @@ def ensure_agent_profile(config: Dict[str, Any]) -> AgentProfile:
             return AgentProfile.get(existing[0].pk)
     except Exception:
         pass
-
-    role_secret = config.get("role_secrets", {}).get(role, "")
-    profile = AgentProfile(
-        first_name=first_name, last_name=last_name, secret=role_secret
-    )
+    profile = AgentProfile(first_name=first_name, last_name=last_name)
     profile.save()
     return profile
 
 
 def create_environment(
     env_profile: EnvironmentProfile, model_name: str, config: Dict[str, Any]
-) -> RPSEnv:
-    return RPSEnv(
+) -> ChickenEnv:
+    return ChickenEnv(
         env_profile=env_profile,
         config=config,
         model_name=model_name,
-        # action_order is handled by config state_properties
-        evaluators=[RPSEvaluator(max_turn_number=10)],
+        evaluators=[ChickenEvaluator(max_turn_number=10)],
         terminal_evaluators=[],
         hide_unknown=True,
     )
@@ -296,18 +288,16 @@ def prepare_scenario(
         for entry in config.get("agents", [])
     ]
     agent_names = [entry.get("name", "") for entry in config.get("agents", [])]
-    scenario = config.get("description", "RPS").format(
+    scenario = config.get("description", "Chicken").format(
         agent_names=", ".join(agent_names)
     )
-
     env_profile = EnvironmentProfile(
         scenario=scenario,
         relationship=RelationshipType.acquaintance,
         agent_goals=agent_goals,
-        tag="rps",
+        tag="chicken",
     )
     env_profile.save()
-
     env = create_environment(env_profile, env_model_name, config)
     agents = create_agents(agent_profiles, env_profile, agent_model_name, config)
     return env, agents
@@ -320,7 +310,6 @@ def print_roster(config: Dict[str, Any]) -> None:
 
 
 def get_model_names(config: Dict[str, Any]) -> Dict[str, str]:
-    """Extract model names from config. Enforces strict requirement."""
     model_map = {}
     for entry in config.get("agents", []):
         name = entry.get("name")
@@ -328,9 +317,7 @@ def get_model_names(config: Dict[str, Any]) -> Dict[str, str]:
         if not name:
             continue
         if not model:
-            raise ValueError(
-                f"Agent '{name}' missing 'agent_model' in config configuration."
-            )
+            raise ValueError(f"Agent '{name}' missing 'agent_model' in config.")
         model_map[name] = model
     return model_map
 
@@ -338,66 +325,45 @@ def get_model_names(config: Dict[str, Any]) -> Dict[str, str]:
 async def main() -> None:
     import argparse
 
-    parser = argparse.ArgumentParser(description="Run Rock-Paper-Scissors game.")
-    parser.add_argument(
-        "--config",
-        type=str,
-        default=str(CONFIG_PATH),
-        help="Path to configuration file",
-    )
-    parser.add_argument(
-        "--roster",
-        type=str,
-        default=str(BASE_DIR / "roster.json"),
-        help="Path to roster file",
-    )
+    parser = argparse.ArgumentParser(description="Run Chicken game.")
+    parser.add_argument("--config", type=str, default=str(CONFIG_PATH))
+    parser.add_argument("--roster", type=str, default=str(BASE_DIR / "roster.json"))
     args = parser.parse_args()
 
-    config_path = args.config
-    roster_path = args.roster
-
-    config = load_config(config_path)
-    roster = load_config(roster_path)
-
-    # Merge roster into config for consistent access
+    config = load_config(args.config)
+    roster = load_config(args.roster)
     config["agents"] = roster.get("agents", [])
 
     agent_model_name = get_model_names(config)
-    env_model_name = "gpt-4o"
+    env, agents = prepare_scenario("gpt-4o", agent_model_name, config)
 
-    # We pass config explicitly to prepare_scenario
-    env, agents = prepare_scenario(env_model_name, agent_model_name, config)
-
-    print("✊✋✌️ Rock Paper Scissors")
+    print("Chicken (Hawk-Dove)")
     print("=" * 60)
     print_roster(config)
     print("=" * 60)
+
     await arun_one_episode(
         env=env,
         agent_list=agents,
         omniscient=False,
         script_like=False,
         json_in_script=False,
-        tag="test_rps",
+        tag="test_chicken",
         push_to_db=True,
     )
 
 
 if __name__ == "__main__":
-    # Configure logging for standalone execution
-    LOG_FILE = BASE_DIR / "rps_game_debug.log"
+    LOG_FILE = BASE_DIR / "chicken_game_debug.log"
     _fh = logging.FileHandler(LOG_FILE, mode="w", encoding="utf-8")
     _fh.setFormatter(
         logging.Formatter("%(asctime)s %(levelname)-7s %(name)s - %(message)s")
     )
-
     _gen_logger.setLevel(logging.DEBUG)
     _gen_logger.addHandler(_fh)
-
     _env_logger.setLevel(logging.INFO)
     _env_logger.addHandler(_fh)
     _env_logger.addHandler(RichHandler())
-
     asyncio.run(main())
     conn = get_redis_connection()
     conn.connection_pool.disconnect()

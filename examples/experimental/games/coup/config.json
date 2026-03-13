@@ -1,0 +1,37 @@
+{
+  "scenario": "Coup",
+  "description": "This game is called Coup, a bluffing game. Each player has 2 hidden influence cards and 2 coins. On your turn, declare an action (some claim a role). Others can challenge your claim or block. Caught bluffing = lose a life (reveal a card). Wrong challenge = challenger loses a life. Last player standing wins.\n\nACTIONS:\n- 'income': Take 1 coin. Cannot be challenged or blocked.\n- 'foreign_aid': Take 2 coins. Can be blocked by Duke.\n- 'tax': Claim Duke, take 3 coins. Can be challenged.\n- 'steal NAME': Claim Captain, take 2 coins from NAME. Can be challenged. Can be blocked by Captain or Ambassador.\n- 'assassinate NAME': Claim Assassin, pay 3 coins, target loses a life. Can be challenged. Can be blocked by Contessa.\n- 'exchange': Claim Ambassador, draw 2 cards from court deck, choose 2 to keep. Can be challenged.\n- 'coup NAME': Pay 7 coins, target loses a life. Cannot be challenged or blocked. MANDATORY if you have 10+ coins.\n\nRESPONSE PHASE: After a declaration, other players choose 'challenge', 'block', or 'pass'.\n- If challenged: declarer proves they have the claimed card. If they do, challenger loses a life. If not, declarer loses a life and action cancelled.\n- If blocked (no challenge): action cancelled.\n- If all pass: action takes effect.\n\nCard types: Duke, Assassin, Captain, Ambassador, Contessa (3 copies each, 15 total). Lose both cards = eliminated.\n\nPlayers: {agent_names}.",
+  "role_goals": {
+    "Player": "Be the last player with influence remaining. Bluff strategically, challenge wisely, and eliminate your opponents."
+  },
+  "role_secrets": {
+    "Player": "Your influence cards will be revealed privately at the start of the game."
+  },
+  "card_types": ["Duke", "Assassin", "Captain", "Ambassador", "Contessa"],
+  "cards_per_type": 3,
+  "starting_coins": 2,
+  "initial_state": "Declare",
+  "state_transition": {
+    "Declare": "Response",
+    "Response": "Declare"
+  },
+  "state_properties": {
+    "Declare": {
+      "actions": ["action"],
+      "action_order": "simultaneous",
+      "visibility": "public"
+    },
+    "Response": {
+      "actions": ["action"],
+      "action_order": "simultaneous",
+      "visibility": "public"
+    }
+  },
+  "end_conditions": [],
+  "agents": [
+    {"name": "Alice", "role": "Player", "team": "None", "agent_model": "gpt-4o"},
+    {"name": "Bob", "role": "Player", "team": "None", "agent_model": "gpt-4o"},
+    {"name": "Charlie", "role": "Player", "team": "None", "agent_model": "gpt-4o"},
+    {"name": "Diana", "role": "Player", "team": "None", "agent_model": "gpt-4o"}
+  ]
+}

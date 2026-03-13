@@ -1,0 +1,67 @@
+{
+  "scenario": "Insider",
+  "description": "This game is called Insider. The group cooperatively tries to guess a secret word by asking yes/no questions answered by the environment. One player -- the Insider -- secretly knows the word and must subtly help the group guess it without being too obvious.\n\nGAME STRUCTURE: The game has four phases: Questioning, Guess, Discussion, and Vote.\n- During Questioning, players take turns asking yes/no questions. The environment answers each question. Up to 15 total questions.\n- During Guess, all players simultaneously guess the word or pass.\n- If no one guesses correctly, everyone loses.\n- If someone guesses correctly, the game proceeds to Discussion, then Vote.\n- During Discussion, players discuss who they think the Insider is.\n- During Vote, all players vote on who they suspect is the Insider.\n\nWIN CONDITIONS:\n- Word NOT guessed: everyone loses (-1.0).\n- Word guessed + Insider identified by majority vote: Citizens win (1.0), Insider loses (-1.0).\n- Word guessed + Insider NOT identified: Insider wins (1.0), Citizens lose (-1.0).\n\nCOMMANDS:\n- Questioning: use 'speak' to ask a yes/no question.\n- Guess: use 'guess WORD' to guess the secret word, or 'pass' to skip.\n- Discussion: use 'speak' to share your suspicions.\n- Vote: use 'vote NAME' to vote for who you think is the Insider.\n\nPlayers: {agent_names}.",
+  "role_goals": {
+    "Citizen": "Help guess the secret word by asking good yes/no questions, then identify who the Insider is and vote them out.",
+    "Insider": "Subtly guide the group to guess the secret word without being too obvious, then avoid being identified in the vote."
+  },
+  "role_secrets": {
+    "Insider": "You are the Insider. The secret word is: {secret_word}. You must subtly help the group guess this word through your questions, but do not be too obvious or you will be identified."
+  },
+  "secret_word": "kangaroo",
+  "secret_word_category": "animal",
+  "secret_word_facts": [
+    "It is an animal",
+    "It is a mammal",
+    "It lives in Australia",
+    "It hops on two legs",
+    "It has a pouch",
+    "It is not a pet",
+    "It is larger than a dog",
+    "It is brown or grey",
+    "It eats grass and plants",
+    "Baby ones are called joeys",
+    "It is a marsupial",
+    "It has a long tail",
+    "It can box with its front paws",
+    "It is a herbivore",
+    "It lives in the wild"
+  ],
+  "max_questions": 15,
+  "initial_state": "Questioning",
+  "state_transition": {
+    "Questioning": "Questioning",
+    "Guess": "Discussion",
+    "Discussion": "Vote"
+  },
+  "state_properties": {
+    "Questioning": {
+      "actions": ["speak"],
+      "action_order": "round-robin",
+      "visibility": "public"
+    },
+    "Guess": {
+      "actions": ["action"],
+      "action_order": "simultaneous",
+      "visibility": "public"
+    },
+    "Discussion": {
+      "actions": ["speak"],
+      "action_order": "round-robin",
+      "visibility": "public"
+    },
+    "Vote": {
+      "actions": ["action"],
+      "action_order": "simultaneous",
+      "visibility": "public"
+    }
+  },
+  "end_conditions": [],
+  "agents": [
+    {"name": "Alice", "role": "Insider", "team": "Insider", "agent_model": "gpt-4o"},
+    {"name": "Bob", "role": "Citizen", "team": "Citizens", "agent_model": "gpt-4o"},
+    {"name": "Charlie", "role": "Citizen", "team": "Citizens", "agent_model": "gpt-4o"},
+    {"name": "Diana", "role": "Citizen", "team": "Citizens", "agent_model": "gpt-4o"},
+    {"name": "Eve", "role": "Citizen", "team": "Citizens", "agent_model": "gpt-4o"}
+  ]
+}

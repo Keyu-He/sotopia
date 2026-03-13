@@ -1,0 +1,17 @@
+{
+    "scenario": "Stag Hunt",
+    "description": "4 players play iterated Stag Hunt for exactly 10 rounds. You cannot speak to the other players. Each round, simultaneously choose 'stag' or 'hare'. If ALL choose stag: 5 points each. If anyone chooses hare: stag hunters get 0, hare hunters get 2. GOAL: Maximize your own score over the 10 rounds. IMPORTANT: If ALL players score less than 45 points, it is a DRAW (everyone loses). Otherwise, the player with the highest score wins. Players: {agent_names}.",
+    "role_goals": {
+        "Player": "Maximize your own score over 10 rounds. You need at least 45 points to have a chance at winning."
+    },
+    "role_secrets": {},
+    "max_rounds": 10,
+    "threshold": 45,
+    "initial_state": "Choose",
+    "state_transition": {
+        "Choose": "Choose"
+    },
+    "state_properties": {
+        "Choose": {"actions": ["action"], "action_order": "simultaneous", "visibility": "public"}
+    }
+}

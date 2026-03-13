@@ -12,6 +12,7 @@ from collections import Counter
 
 from rich.logging import RichHandler
 import redis
+from redis_om import get_redis_connection
 
 from sotopia.agents import LLMAgent
 from sotopia.agents.llm_agent import Agents
@@ -74,14 +75,25 @@ class WerewolfGameEndEvaluator(SocialGameEndEvaluator):
                     env.recv_message("Environment", SimpleMessage(message=msg))
 
                     # Calculate rewards
+                    winning_team = [
+                        a
+                        for a in env.agents
+                        if env.role_to_team.get(env.agent_to_role.get(a, ""), "")
+                        == winner
+                    ]
+                    losing_team = [
+                        a
+                        for a in env.agents
+                        if env.role_to_team.get(env.agent_to_role.get(a, ""), "")
+                        != winner
+                    ]
+                    n_winners = len(winning_team)
+                    n_losers = len(losing_team)
                     rewards = {}
-                    for agent_name in env.agents:
-                        role = env.agent_to_role.get(agent_name, "")
-                        team = env.role_to_team.get(role, "")
-                        if team == winner:
-                            rewards[agent_name] = 1.0
-                        else:
-                            rewards[agent_name] = -1.0
+                    for agent_name in winning_team:
+                        rewards[agent_name] = 1.0 / n_winners
+                    for agent_name in losing_team:
+                        rewards[agent_name] = -1.0 / n_losers if n_losers > 0 else 0.0
 
                     return True, msg, rewards
 
@@ -94,14 +106,25 @@ class WerewolfGameEndEvaluator(SocialGameEndEvaluator):
                     env.recv_message("Environment", SimpleMessage(message=msg))
 
                     # Calculate rewards
+                    winning_team = [
+                        a
+                        for a in env.agents
+                        if env.role_to_team.get(env.agent_to_role.get(a, ""), "")
+                        == winner
+                    ]
+                    losing_team = [
+                        a
+                        for a in env.agents
+                        if env.role_to_team.get(env.agent_to_role.get(a, ""), "")
+                        != winner
+                    ]
+                    n_winners = len(winning_team)
+                    n_losers = len(losing_team)
                     rewards = {}
-                    for agent_name in env.agents:
-                        role = env.agent_to_role.get(agent_name, "")
-                        team = env.role_to_team.get(role, "")
-                        if team == winner:
-                            rewards[agent_name] = 1.0
-                        else:
-                            rewards[agent_name] = -1.0
+                    for agent_name in winning_team:
+                        rewards[agent_name] = 1.0 / n_winners
+                    for agent_name in losing_team:
+                        rewards[agent_name] = -1.0 / n_losers if n_losers > 0 else 0.0
 
                     return True, msg, rewards
 
@@ -647,3 +670,6 @@ if __name__ == "__main__":
     _env_logger.addHandler(RichHandler())
 
     asyncio.run(main())
+    conn = get_redis_connection()
+    conn.connection_pool.disconnect()
+    conn.close()

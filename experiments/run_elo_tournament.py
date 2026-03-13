@@ -19,9 +19,10 @@ logger = logging.getLogger(__name__)
 
 async def run_elo_tournament(
     game_names: list[str],
-    tag: str = "elo_exp_v1",
+    tag: str = "elo_v2",
     push_to_db: bool = True,
     concurrency_limit: int = 10,
+    roster_dir: str = "",
 ) -> None:
     """
     Run ELO tournament by executing pre-generated rosters found in experiments/rosters/.
@@ -67,13 +68,15 @@ async def run_elo_tournament(
             f"  Found {len(executed_rosters)} already executed rosters (across all games)."
         )
 
-        roster_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "rosters", game_name)
+        roster_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "rosters", roster_dir, game_name)
+            if roster_dir
+            else os.path.join(os.path.dirname(__file__), "rosters", game_name)
         )
-        roster_files = sorted(glob.glob(os.path.join(roster_dir, "*.json")))
+        roster_files = sorted(glob.glob(os.path.join(roster_path, "*.json")))
 
         if not roster_files:
-            print(f"  No rosters found in {roster_dir}")
+            print(f"  No rosters found in {roster_path}")
             continue
 
         print(f"  Found {len(roster_files)} total rosters.")
@@ -179,10 +182,10 @@ async def run_elo_tournament(
                         output_path=log_path,
                         metadata=metadata,
                     )
-                except Exception:
-                    # TQDM will swallow prints usually, so we might want to log errors manually if crucial
-                    # logging.error(f"Error in {filename}: {e}")
-                    pass
+                except Exception as e:
+                    import traceback
+
+                    print(f"\nERROR in {filename}: {e}\n{traceback.format_exc()}")
 
         # Create tasks
         tasks = [asyncio.create_task(_worker(p)) for p in rosters_to_run]
@@ -217,23 +220,48 @@ if __name__ == "__main__":
         "--game",
         nargs="+",
         default=[
-            "werewolves",
-            "spyfall",
-            "prisoners_dilemma",
             "rock_paper_scissors",
+            "battle_of_the_sexes",
+            "chicken",
+            "stag_hunt",
+            "centipede",
+            "prisoners_dilemma",
+            "minority_game",
+            "public_goods",
+            "bargaining",
+            "dead_last",
             "undercover",
+            "spyfall",
+            "chameleon",
+            "insider",
+            "liars_dice",
+            "werewolves",
+            "resistance",
+            "coup",
+            "survivor",
+            "sheriff",
+            "skull",
         ],
         help="List of games to execute rosters for",
     )
-    parser.add_argument("--tag", type=str, default="elo_exp_v1", help="Experiment tag")
+    parser.add_argument("--tag", type=str, default="elo_v2", help="Experiment tag")
     parser.add_argument(
         "--concurrency", type=int, default=10, help="Max concurrent episodes"
+    )
+    parser.add_argument(
+        "--roster-dir",
+        type=str,
+        default="v2",
+        help="Subdirectory under experiments/rosters/ for this run (default: v2)",
     )
 
     args = parser.parse_args()
 
     asyncio.run(
         run_elo_tournament(
-            game_names=args.game, tag=args.tag, concurrency_limit=args.concurrency
+            game_names=args.game,
+            tag=args.tag,
+            concurrency_limit=args.concurrency,
+            roster_dir=args.roster_dir,
         )
     )

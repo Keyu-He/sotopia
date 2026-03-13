@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 import os
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import redis
+from redis_om import get_redis_connection
 from rich.logging import RichHandler
 
 from sotopia.agents import LLMAgent
@@ -459,3 +460,6 @@ if __name__ == "__main__":
     _env_logger.addHandler(RichHandler())
 
     asyncio.run(main())
+    conn = get_redis_connection()
+    conn.connection_pool.disconnect()
+    conn.close()

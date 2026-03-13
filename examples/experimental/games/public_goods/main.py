@@ -1,10 +1,11 @@
-"""Launcher for the Rock, Paper, Scissors game."""
+"""Launcher for the Public Goods Game."""
 
 from __future__ import annotations
 
 import asyncio
 import os
 import logging
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -35,99 +36,76 @@ CONFIG_PATH = BASE_DIR / "config.json"
 os.environ.setdefault("REDIS_OM_URL", "redis://:@localhost:6379")
 redis.Redis(host="localhost", port=6379)
 
-# Loggers (configured in main if running standalone)
 _gen_logger = logging.getLogger("sotopia.generation")
 _env_logger = logging.getLogger("sotopia.envs.social_game")
 
 
-# ============================================================================
-# Evaluator
-# ============================================================================
-
-
-class RPSEvaluator(SocialGameEndEvaluator):
+class PublicGoodsEvaluator(SocialGameEndEvaluator):
     def __call__(
         self, turn_number: int, messages: List[Tuple[str, Message]], **kwargs: Any
     ) -> List[Tuple[str, Tuple[Tuple[str, int | float | bool], str]]]:
+        env = kwargs.get("env")
+        if env and env.internal_state.get("game_over", False):
+            scores = env.internal_state.get("final_scores", {})
+            reason = env.internal_state.get("end_reason", "Game over")
+            response: List[Tuple[str, Tuple[Tuple[str, int | float | bool], str]]] = [
+                ("environment", (("terminated", True), reason))
+            ]
+            for idx, name in enumerate(env.agents):
+                score = scores.get(name, 0.0)
+                response.append((f"agent_{idx + 1}", (("complete_rating", score), "")))
+            return response
         if turn_number >= self.max_turn_number:
-            env = kwargs.get("env")
-            if env:
-                scores = env.internal_state.get("scores", {})
-                response: List[
-                    Tuple[str, Tuple[Tuple[str, int | float | bool], str]]
-                ] = [("environment", (("terminated", True), "Max (10) turns reached"))]
-
-                agent_names = list(env.agents)
-                scores_dict = {name: scores.get(name, 0) for name in agent_names}
-
-                # Logic:
-                # Highest score wins (1), Loser (-1). Tie -> 0.
-
-                values = list(scores_dict.values())
-                rewards = {name: 0.0 for name in agent_names}
-
-                if len(values) == 2:
-                    s1, s2 = values[0], values[1]
-                    n1, n2 = agent_names[0], agent_names[1]
-
-                    if s1 > s2:
-                        rewards[n1] = 1.0
-                        rewards[n2] = -1.0
-                    elif s2 > s1:
-                        rewards[n1] = -1.0
-                        rewards[n2] = 1.0
-
-                for agent_name in agent_names:
-                    idx = agent_names.index(agent_name)
-                    key = f"agent_{idx+1}"
-                    raw_score = scores_dict.get(agent_name, 0)
-                    reward = rewards.get(agent_name, 0.0)
-                    response.append(
-                        (
-                            key,
-                            (("complete_rating", reward), f"Final Score: {raw_score}"),
-                        )
-                    )
-                return response
-            return [("environment", (("terminated", True), "Max turns reached"))]
+            return [("environment", (("terminated", True), "Timeout"))]
         return [("environment", (("terminated", False), ""))]
 
 
-# ============================================================================
-# Action Handler
-# ============================================================================
-
-
-class RPSActionHandler(ActionHandler):
+class PublicGoodsActionHandler(ActionHandler):
     def handle_action(
         self, env: SocialDeductionGame, agent_name: str, action: AgentAction
     ) -> None:
-        if isinstance(env, RPSEnv) and action.action_type in ["action", "speak"]:
-            move_str = action.argument.lower()
-            current_move = None
-            if "rock" in move_str:
-                current_move = "Rock"
-            elif "paper" in move_str:
-                current_move = "Paper"
-            elif "scissors" in move_str or "scissor" in move_str:
-                current_move = "Scissors"
-
-            if current_move:
-                env.internal_state["current_moves"][agent_name] = current_move
+        if not isinstance(env, PublicGoodsEnv):
+            return
+        if action.action_type not in ["action", "speak"]:
+            return
+        if env.current_state == "Contribute":
+            arg = action.argument.strip()
+            numbers = re.findall(r"\d+", arg)
+            if numbers:
+                amount = int(numbers[0])
+                amount = max(0, min(10, amount))
+                env.internal_state["current_contributions"][agent_name] = amount
 
     def get_action_instruction(self, env: SocialDeductionGame, agent_name: str) -> str:
-        return "You are playing Rock-Paper-Scissors. Choose 'action: rock', 'action: paper', or 'action: scissors'. You cannot speak."
+        if not isinstance(env, PublicGoodsEnv):
+            return ""
+        if env.current_state == "Contribute":
+            round_num = env.internal_state.get("round", 0) + 1
+            max_rounds = env._config.get("max_rounds", 10)
+            multiplier = env._config.get("multiplier", 1.5)
+            scores = env.internal_state.get("scores", {})
+            last_contribs = env.internal_state.get("last_contributions", {})
+            contrib_info = ""
+            if last_contribs:
+                contrib_info = (
+                    " Last round: "
+                    + ", ".join(f"{n}: {c}" for n, c in last_contribs.items())
+                    + "."
+                )
+            num_players = len(env.agents)
+            top_n = num_players // 2
+            return (
+                f"Round {round_num}/{max_rounds}. Earnings: {scores}.{contrib_info} "
+                f"Contribute 0-10 tokens. Use 'contribute N'. "
+                f"Pool = total x {multiplier}, split equally. You keep uncontributed tokens. "
+                f"Top {top_n} earners WIN, bottom {top_n} LOSE. Relative ranking matters."
+            )
+        return ""
 
 
-# ============================================================================
-# Environment
-# ============================================================================
-
-
-class RPSEnv(SocialDeductionGame):
+class PublicGoodsEnv(SocialDeductionGame):
     def __init__(self, **kwargs: Any) -> None:
-        super().__init__(action_handler=RPSActionHandler(), **kwargs)
-        self.internal_state = {"round": 0, "scores": {}, "current_moves": {}}
+        super().__init__(action_handler=PublicGoodsActionHandler(), **kwargs)
 
     def reset(
         self,
@@ -146,56 +124,89 @@ class RPSEnv(SocialDeductionGame):
             lite=lite,
             include_background_observations=include_background_observations,
         )
-        self.internal_state = {"round": 0, "scores": {}, "current_moves": {}}
-        for agent in self.agents:
-            self.internal_state["scores"][agent] = 0
+        self.internal_state = {
+            "round": 0,
+            "scores": {name: 0.0 for name in self.agents},
+            "current_contributions": {},
+            "last_contributions": {},
+            "game_over": False,
+            "final_scores": {},
+            "end_reason": "",
+        }
         return obs
 
-    async def astep(
-        self, actions: Dict[str, AgentAction] | Dict[str, Dict[str, int | str]]
-    ) -> Tuple[
-        Dict[str, Any],
-        Dict[str, float],
-        Dict[str, bool],
-        Dict[str, bool],
-        Dict[str, Any],
-    ]:
-        if self.action_handler:
-            for agent_name, action in actions.items():
-                if isinstance(action, AgentAction):
-                    self.action_handler.handle_action(self, agent_name, action)
+    def _check_eliminations(self) -> None:
+        if not self._should_transition_state():
+            return
 
-        moves = self.internal_state["current_moves"]
-        if len(moves) == len(self.agents) and len(self.agents) == 2:
-            agents = list(self.agents)
-            a1, a2 = agents[0], agents[1]
-            m1, m2 = moves[a1], moves[a2]
+        if self.current_state == "Contribute":
+            contribs = self.internal_state.get("current_contributions", {})
+            if len(contribs) < len(self.agents):
+                return
+            scores = self.internal_state["scores"]
 
-            result, winner = "Draw", None
-            if m1 == m2:
-                result = "Draw"
-            elif (
-                (m1 == "Rock" and m2 == "Scissors")
-                or (m1 == "Scissors" and m2 == "Paper")
-                or (m1 == "Paper" and m2 == "Rock")
-            ):
-                winner = a1
-            else:
-                winner = a2
+            tokens = self._config.get("tokens_per_round", 10)
+            multiplier = self._config.get("multiplier", 1.5)
+            num_players = len(self.agents)
 
-            r1, r2 = (1, -1) if winner == a1 else (-1, 1) if winner == a2 else (0, 0)
-            result = f"{winner} wins!" if winner else "Draw"
+            total_pool = sum(contribs.values()) * multiplier
+            share = total_pool / num_players
 
-            self.internal_state["scores"][a1] += r1
-            self.internal_state["scores"][a2] += r2
+            payoffs = {}
+            for name in self.agents:
+                contrib = contribs.get(name, 0)
+                payoff = (tokens - contrib) + share
+                payoffs[name] = round(payoff, 1)
+                scores[name] = round(scores.get(name, 0) + payoff, 1)
 
-            msg = f"Round {self.internal_state['round']+1}: {a1} ({m1}) vs {a2} ({m2}) -> {result}"
-            self.recv_message("Environment", SimpleMessage(message=msg))
+            round_num = self.internal_state["round"] + 1
+            self.internal_state["round"] = round_num
+            self.internal_state["last_contributions"] = dict(contribs)
+            self.internal_state["current_contributions"] = {}
 
-            self.internal_state["round"] += 1
-            self.internal_state["current_moves"] = {}
+            contrib_str = ", ".join(
+                f"{n}: contributed {contribs.get(n, 0)}" for n in self.agents
+            )
+            payoff_str = ", ".join(f"{n}: earned {payoffs[n]}" for n in self.agents)
+            self.recv_message(
+                "Environment",
+                SimpleMessage(
+                    message=f"[Round {round_num}] Contributions: {contrib_str}. "
+                    f"Pool: {sum(contribs.values())} x {multiplier} = {total_pool:.1f}. "
+                    f"Share: {share:.1f} each. Payoffs: {payoff_str}. "
+                    f"Cumulative: {scores}"
+                ),
+            )
 
-        return await super().astep(actions)
+            max_rounds = self._config.get("max_rounds", 10)
+            if round_num >= max_rounds:
+                # Top n/2 earners win, bottom n/2 lose
+                sorted_players = sorted(
+                    scores.items(), key=lambda x: x[1], reverse=True
+                )
+                num_players = len(sorted_players)
+                top_n = num_players // 2
+                final = {}
+                for rank, (name, _) in enumerate(sorted_players):
+                    if rank < top_n:
+                        final[name] = 1.0
+                    else:
+                        final[name] = -1.0
+                # Handle ties at the boundary
+                boundary_score = sorted_players[top_n - 1][1] if top_n > 0 else 0
+                if all(s == boundary_score for _, s in sorted_players):
+                    final = {n: 0.0 for n in scores}
+
+                reason = (
+                    f"Game over after {max_rounds} rounds. Final earnings: {scores}"
+                )
+                self.internal_state["game_over"] = True
+                self.internal_state["final_scores"] = final
+                self.internal_state["end_reason"] = reason
+                self.recv_message(
+                    "Environment",
+                    SimpleMessage(message=f"[Game] {reason}"),
+                )
 
 
 # ============================================================================
@@ -204,13 +215,10 @@ class RPSEnv(SocialDeductionGame):
 
 
 def ensure_agent_profile(config: Dict[str, Any]) -> AgentProfile:
-    """Create or retrieve agent profile."""
     name = config.get("name", "")
-    role = config.get("role", "")
     first_name, _, last_name = name.partition(" ")
     if not last_name:
         last_name = ""
-
     try:
         existing = AgentProfile.find(
             (AgentProfile.first_name == first_name)
@@ -220,24 +228,19 @@ def ensure_agent_profile(config: Dict[str, Any]) -> AgentProfile:
             return AgentProfile.get(existing[0].pk)
     except Exception:
         pass
-
-    role_secret = config.get("role_secrets", {}).get(role, "")
-    profile = AgentProfile(
-        first_name=first_name, last_name=last_name, secret=role_secret
-    )
+    profile = AgentProfile(first_name=first_name, last_name=last_name)
     profile.save()
     return profile
 
 
 def create_environment(
     env_profile: EnvironmentProfile, model_name: str, config: Dict[str, Any]
-) -> RPSEnv:
-    return RPSEnv(
+) -> PublicGoodsEnv:
+    return PublicGoodsEnv(
         env_profile=env_profile,
         config=config,
         model_name=model_name,
-        # action_order is handled by config state_properties
-        evaluators=[RPSEvaluator(max_turn_number=10)],
+        evaluators=[PublicGoodsEvaluator(max_turn_number=10)],
         terminal_evaluators=[],
         hide_unknown=True,
     )
@@ -255,13 +258,11 @@ def create_agents(
         role_goal = env_profile.agent_goals[idx]
         role = config.get("agents", [])[idx].get("role", "")
         secrets = config.get("role_secrets", {}).get(role, "")
-
         filled_template = (
             SOCIAL_GAME_PROMPT_TEMPLATE.replace("{description}", env_profile.scenario)
             .replace("{secret}", f"Your secret info: {secrets}")
             .replace("{goal}", role_goal)
         )
-
         if isinstance(model_name, dict):
             this_agent_model = model_name.get(
                 agent_name, model_name.get("default", "gpt-4")
@@ -270,7 +271,6 @@ def create_agents(
             this_agent_model = model_name[idx]
         else:
             this_agent_model = model_name
-
         agent = LLMAgent(
             agent_name=agent_name,
             agent_profile=profile,
@@ -296,18 +296,16 @@ def prepare_scenario(
         for entry in config.get("agents", [])
     ]
     agent_names = [entry.get("name", "") for entry in config.get("agents", [])]
-    scenario = config.get("description", "RPS").format(
+    scenario = config.get("description", "Public Goods Game").format(
         agent_names=", ".join(agent_names)
     )
-
     env_profile = EnvironmentProfile(
         scenario=scenario,
         relationship=RelationshipType.acquaintance,
         agent_goals=agent_goals,
-        tag="rps",
+        tag="public_goods",
     )
     env_profile.save()
-
     env = create_environment(env_profile, env_model_name, config)
     agents = create_agents(agent_profiles, env_profile, agent_model_name, config)
     return env, agents
@@ -320,7 +318,6 @@ def print_roster(config: Dict[str, Any]) -> None:
 
 
 def get_model_names(config: Dict[str, Any]) -> Dict[str, str]:
-    """Extract model names from config. Enforces strict requirement."""
     model_map = {}
     for entry in config.get("agents", []):
         name = entry.get("name")
@@ -328,9 +325,7 @@ def get_model_names(config: Dict[str, Any]) -> Dict[str, str]:
         if not name:
             continue
         if not model:
-            raise ValueError(
-                f"Agent '{name}' missing 'agent_model' in config configuration."
-            )
+            raise ValueError(f"Agent '{name}' missing 'agent_model' in config.")
         model_map[name] = model
     return model_map
 
@@ -338,37 +333,16 @@ def get_model_names(config: Dict[str, Any]) -> Dict[str, str]:
 async def main() -> None:
     import argparse
 
-    parser = argparse.ArgumentParser(description="Run Rock-Paper-Scissors game.")
-    parser.add_argument(
-        "--config",
-        type=str,
-        default=str(CONFIG_PATH),
-        help="Path to configuration file",
-    )
-    parser.add_argument(
-        "--roster",
-        type=str,
-        default=str(BASE_DIR / "roster.json"),
-        help="Path to roster file",
-    )
+    parser = argparse.ArgumentParser(description="Run Public Goods Game.")
+    parser.add_argument("--config", type=str, default=str(CONFIG_PATH))
+    parser.add_argument("--roster", type=str, default=str(BASE_DIR / "roster.json"))
     args = parser.parse_args()
-
-    config_path = args.config
-    roster_path = args.roster
-
-    config = load_config(config_path)
-    roster = load_config(roster_path)
-
-    # Merge roster into config for consistent access
+    config = load_config(args.config)
+    roster = load_config(args.roster)
     config["agents"] = roster.get("agents", [])
-
     agent_model_name = get_model_names(config)
-    env_model_name = "gpt-4o"
-
-    # We pass config explicitly to prepare_scenario
-    env, agents = prepare_scenario(env_model_name, agent_model_name, config)
-
-    print("✊✋✌️ Rock Paper Scissors")
+    env, agents = prepare_scenario("gpt-4o", agent_model_name, config)
+    print("Public Goods Game")
     print("=" * 60)
     print_roster(config)
     print("=" * 60)
@@ -378,26 +352,22 @@ async def main() -> None:
         omniscient=False,
         script_like=False,
         json_in_script=False,
-        tag="test_rps",
+        tag="test_public_goods",
         push_to_db=True,
     )
 
 
 if __name__ == "__main__":
-    # Configure logging for standalone execution
-    LOG_FILE = BASE_DIR / "rps_game_debug.log"
+    LOG_FILE = BASE_DIR / "public_goods_game_debug.log"
     _fh = logging.FileHandler(LOG_FILE, mode="w", encoding="utf-8")
     _fh.setFormatter(
         logging.Formatter("%(asctime)s %(levelname)-7s %(name)s - %(message)s")
     )
-
     _gen_logger.setLevel(logging.DEBUG)
     _gen_logger.addHandler(_fh)
-
     _env_logger.setLevel(logging.INFO)
     _env_logger.addHandler(_fh)
     _env_logger.addHandler(RichHandler())
-
     asyncio.run(main())
     conn = get_redis_connection()
     conn.connection_pool.disconnect()
