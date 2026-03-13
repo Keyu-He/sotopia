@@ -51,7 +51,7 @@ def generate_single_table_html(
             provider = "Mistral"
 
         wr_val = item["win_rate"]
-        wr_color = "#e55" if wr_val < 50 else "#2a9d8f"
+        wr_color = f"hsl({int(wr_val * 1.2)}, 70%, 40%)"
 
         split_elo_cells = ""
         if show_split_elo:
@@ -117,6 +117,73 @@ def generate_single_table_html(
     return table_html
 
 
+def generate_cooperative_table_html(title: str, stats: list[dict[str, Any]]) -> str:
+    """Generates a win-rate-only table for cooperative/coordination games."""
+    rows_html = ""
+    # Re-rank by win rate
+    sorted_stats = sorted(stats, key=lambda x: x["win_rate"], reverse=True)
+    for rank, item in enumerate(sorted_stats, 1):
+        rank_display = f"#{rank}"
+        if rank == 1:
+            rank_display = "🥇"
+        if rank == 2:
+            rank_display = "🥈"
+        if rank == 3:
+            rank_display = "🥉"
+
+        name = item["model"]
+        provider = "Unknown"
+        lower_name = name.lower()
+        if "gpt" in lower_name:
+            provider = "OpenAI"
+        elif "qwen" in lower_name:
+            provider = "Alibaba"
+        elif "gemini" in lower_name or "google" in lower_name:
+            provider = "Google"
+        elif "claude" in lower_name:
+            provider = "Anthropic"
+        elif "llama" in lower_name:
+            provider = "Meta"
+        elif "mistral" in lower_name:
+            provider = "Mistral"
+
+        wr_val = item["win_rate"]
+        wr_color = f"hsl({int(wr_val * 1.2)}, 70%, 40%)"
+
+        rows_html += f"""
+        <tr>
+            <td class="rank">{rank_display}</td>
+            <td>
+                <div class="model-cell">
+                    <span class="model-name">{name}</span>
+                    <span class="model-provider"><span class="provider-icon"></span> {provider}</span>
+                </div>
+            </td>
+            <td class="win-rate" style="color: {wr_color}">{wr_val:.1f}%</td>
+            <td class="matches">{item['matches']}</td>
+        </tr>
+        """
+
+    return f"""
+    <div class="leaderboard-section">
+        <h2>{title}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Model</th>
+                    <th>Win Rate</th>
+                    <th style="text-align: right;">Matches</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+    </div>
+    """
+
+
 def generate_html_report(
     competitive_tables: Dict[str, list[dict[str, Any]]],
     cooperative_tables: Dict[str, list[dict[str, Any]]],
@@ -126,7 +193,7 @@ def generate_html_report(
     competitive_tables / cooperative_tables: { "Title": stats_list, ... }
     """
 
-    def render_section(
+    def render_competitive_section(
         tables: Dict[str, list[dict[str, Any]]], overall_key: str
     ) -> str:
         html = ""
@@ -144,8 +211,26 @@ def generate_html_report(
             )
         return html
 
-    competitive_html = render_section(competitive_tables, "Competitive Overall")
-    cooperative_html = render_section(cooperative_tables, "Cooperative Overall")
+    def render_cooperative_section(
+        tables: Dict[str, list[dict[str, Any]]], overall_key: str
+    ) -> str:
+        html = ""
+        if overall_key in tables:
+            html += generate_cooperative_table_html(
+                f"{overall_key} Leaderboard", tables[overall_key]
+            )
+        for title in sorted(t for t in tables if t != overall_key):
+            html += generate_cooperative_table_html(
+                f"{title} Leaderboard", tables[title]
+            )
+        return html
+
+    competitive_html = render_competitive_section(
+        competitive_tables, "Competitive Overall"
+    )
+    cooperative_html = render_cooperative_section(
+        cooperative_tables, "Cooperative Overall"
+    )
 
     html_template = f"""
     <!DOCTYPE html>
