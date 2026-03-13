@@ -3,7 +3,7 @@ import glob
 import os
 import csv
 from collections import defaultdict
-from typing import Any, Tuple, Optional, Dict
+from typing import Any, Dict
 
 # Simple ELO implementation
 K_FACTOR = 32
@@ -193,54 +193,25 @@ def generate_html_report(tables_data: Dict[str, list[dict[str, Any]]]) -> str:
     return html_template
 
 
-def get_match_result(
-    model_mapping: dict[str, str],
-    agent_rewards: dict[str, float],
-    alt_model: str,
-    main_model: str,
-) -> Optional[Tuple[bool, float, float]]:
-    """
-    Determines if the Alt model won against the Main model.
-    Returns (alt_won: bool, alt_reward, main_reward) or None if inconclusive.
-    """
-
-    # We need to find ONE representative agent for Alt model and ONE for Main model
-    # to compare their rewards.
-    # Why? Because in these games, team members usually get the same reward.
-
-    alt_agent = None
-    main_agent = None
-
-    for agent, model in model_mapping.items():
-        if model == alt_model and alt_agent is None:
-            alt_agent = agent
-        elif model == main_model and main_agent is None:
-            main_agent = agent
-
-        if alt_agent and main_agent:
-            break
-
-    if not alt_agent or not main_agent:
-        return None
-
-    r_alt = agent_rewards.get(alt_agent, 0.0)
-    r_main = agent_rewards.get(main_agent, 0.0)
-
-    return (r_alt > r_main), r_alt, r_main
-
-
 def process_logs(log_files: list[str]) -> list[dict[str, Any]]:
     """
-    Process a list of log files and return stats for the leaderboard.
+    Process log files with all-pairs ELO updates.
+
+    - Team games (metadata has *_model keys beyond model_a/model_b):
+        only compare cross-team pairs; agents on the same team are not compared.
+    - Individual games: compare all pairs of agents.
+    - Self-play pairs (same model) are skipped.
     """
     elo_overall: dict[str, float] = defaultdict(lambda: STARTING_ELO)
-    elo_wolf: dict[str, float] = defaultdict(lambda: STARTING_ELO)  # Alt role
-    elo_villager: dict[str, float] = defaultdict(lambda: STARTING_ELO)  # Main role
+    elo_alt: dict[str, float] = defaultdict(
+        lambda: STARTING_ELO
+    )  # minority/hidden role
+    elo_main: dict[str, float] = defaultdict(lambda: STARTING_ELO)  # majority role
 
     wins: dict[str, int] = defaultdict(int)
-    total_games: dict[str, int] = defaultdict(int)
+    total_pairwise: dict[str, int] = defaultdict(int)
+    episodes_played: dict[str, int] = defaultdict(int)
 
-    count = 0
     for filepath in log_files:
         try:
             with open(filepath, "r") as f:
@@ -263,181 +234,101 @@ def process_logs(log_files: list[str]) -> list[dict[str, Any]]:
             if len(model_mapping) != len(parsed_rewards):
                 continue
 
-            # Map Agent Name -> Reward
-            # Relies on implicit ordering of keys vs list.
-            # Sotopia seems to maintain this consistency.
-            agent_rewards = {}
-            for i, agent_name in enumerate(model_mapping.keys()):
-                agent_rewards[agent_name] = parsed_rewards[i]
+            agents = list(model_mapping.keys())
+            agent_rewards = {agents[i]: parsed_rewards[i] for i in range(len(agents))}
 
-            # --- Dispatch Logic based on Metadata Keys ---
+            # Count one episode per unique model in this game
+            for m in set(model_mapping.values()):
+                episodes_played[m] += 1
 
-            check_processed = False
+            # Detect team structure: any metadata key ending in "_model"
+            # beyond the generic model_a / model_b entries
+            team_model_keys = {
+                k: v
+                for k, v in metadata.items()
+                if k.endswith("_model") and k not in ("model_a", "model_b")
+            }
 
-            # 1. Werewolves
-            if "Werewolves_model" in metadata and "Villagers_model" in metadata:
-                m_alt = metadata["Werewolves_model"]
-                m_main = metadata["Villagers_model"]
+            alt_agents: list[str] = []
+            main_agents: list[str] = []
+            is_team_game = False
 
-                res = get_match_result(model_mapping, agent_rewards, m_alt, m_main)
-                if res:
-                    alt_won, r_alt, r_main = res
-                    score_alt = 1.0 if alt_won else 0.0
-                    score_main = 1.0 - score_alt
+            if len(team_model_keys) >= 2:
+                # Group agents by their team model
+                team_groups: dict[str, tuple[str, list[str]]] = {}
+                for team_key, team_model in team_model_keys.items():
+                    team_name = team_key[: -len("_model")]
+                    members = [a for a, m in model_mapping.items() if m == team_model]
+                    if members:
+                        team_groups[team_name] = (team_model, members)
 
-                    # Updates
-                    elo_overall[m_alt] += K_FACTOR * (
-                        score_alt
-                        - expected_score(elo_overall[m_alt], elo_overall[m_main])
-                    )
-                    elo_overall[m_main] += K_FACTOR * (
-                        score_main
-                        - expected_score(elo_overall[m_main], elo_overall[m_alt])
-                    )
+                if len(team_groups) >= 2:
+                    is_team_game = True
+                    # Smaller team = alt (minority/hidden role); larger = main
+                    sorted_teams = sorted(team_groups.values(), key=lambda x: len(x[1]))
+                    _, alt_agents = sorted_teams[0]
+                    _, main_agents = sorted_teams[-1]
 
-                    elo_wolf[m_alt] += K_FACTOR * (
-                        score_alt
-                        - expected_score(elo_wolf[m_alt], elo_villager[m_main])
-                    )
-                    elo_villager[m_main] += K_FACTOR * (
-                        score_main
-                        - expected_score(elo_villager[m_main], elo_wolf[m_alt])
-                    )
-
-                    winner = m_alt if alt_won else m_main
-                    wins[winner] += 1
-                    total_games[m_alt] += 1
-                    if m_alt != m_main:
-                        total_games[m_main] += 1
-                    check_processed = True
-
-            # 2. Spyfall
-            elif "Spy_model" in metadata and "Non-Spies_model" in metadata:
-                m_alt = metadata["Spy_model"]
-                m_main = metadata["Non-Spies_model"]
-
-                res = get_match_result(model_mapping, agent_rewards, m_alt, m_main)
-                if res:
-                    alt_won, r_alt, r_main = res
-                    score_alt = 1.0 if alt_won else 0.0
-                    score_main = 1.0 - score_alt
-
-                    elo_overall[m_alt] += K_FACTOR * (
-                        score_alt
-                        - expected_score(elo_overall[m_alt], elo_overall[m_main])
-                    )
-                    elo_overall[m_main] += K_FACTOR * (
-                        score_main
-                        - expected_score(elo_overall[m_main], elo_overall[m_alt])
-                    )
-
-                    elo_wolf[m_alt] += K_FACTOR * (
-                        score_alt
-                        - expected_score(elo_wolf[m_alt], elo_villager[m_main])
-                    )
-                    elo_villager[m_main] += K_FACTOR * (
-                        score_main
-                        - expected_score(elo_villager[m_main], elo_wolf[m_alt])
-                    )
-
-                    winner = m_alt if alt_won else m_main
-                    wins[winner] += 1
-                    total_games[m_alt] += 1
-                    if m_alt != m_main:
-                        total_games[m_main] += 1
-                    check_processed = True
-
-            # 3. Undercover
-            elif "Undercover_model" in metadata and "Civilians_model" in metadata:
-                m_alt = metadata["Undercover_model"]
-                m_main = metadata["Civilians_model"]
-
-                res = get_match_result(model_mapping, agent_rewards, m_alt, m_main)
-                if res:
-                    alt_won, r_alt, r_main = res
-                    score_alt = 1.0 if alt_won else 0.0
-                    score_main = 1.0 - score_alt
-
-                    elo_overall[m_alt] += K_FACTOR * (
-                        score_alt
-                        - expected_score(elo_overall[m_alt], elo_overall[m_main])
-                    )
-                    elo_overall[m_main] += K_FACTOR * (
-                        score_main
-                        - expected_score(elo_overall[m_main], elo_overall[m_alt])
-                    )
-
-                    elo_wolf[m_alt] += K_FACTOR * (
-                        score_alt
-                        - expected_score(elo_wolf[m_alt], elo_villager[m_main])
-                    )
-                    elo_villager[m_main] += K_FACTOR * (
-                        score_main
-                        - expected_score(elo_villager[m_main], elo_wolf[m_alt])
-                    )
-
-                    winner = m_alt if alt_won else m_main
-                    wins[winner] += 1
-                    total_games[m_alt] += 1
-                    if m_alt != m_main:
-                        total_games[m_main] += 1
-                    check_processed = True
-
-            # 4. Symmetric Fallback
+            # Build pairs to compare
+            if is_team_game:
+                # Cross-team only: every alt agent vs every main agent
+                pairs = [(a1, a2) for a1 in alt_agents for a2 in main_agents]
             else:
-                # If no role keys, assume symmetric (RPS, PD, etc)
-                # metadata should have model_a, model_b
-                # OR we just pick 2 from model_mapping
+                # All pairs
+                pairs = [
+                    (agents[i], agents[j])
+                    for i in range(len(agents))
+                    for j in range(i + 1, len(agents))
+                ]
 
-                agents = list(model_mapping.keys())
-                if len(agents) >= 2:
-                    # Prefer metadata definition if available?
-                    # Actually standardizing on model_mapping logic is safer
+            for a1, a2 in pairs:
+                m1 = model_mapping[a1]
+                m2 = model_mapping[a2]
 
-                    a1, a2 = agents[0], agents[1]
-                    m1, m2 = model_mapping[a1], model_mapping[a2]
-                    r1, r2 = agent_rewards[a1], agent_rewards[a2]
+                # Skip same-model self-play
+                if m1 == m2:
+                    continue
 
-                    if r1 > r2:
-                        s1, s2 = 1.0, 0.0
-                    elif r2 > r1:
-                        s1, s2 = 0.0, 1.0
-                    else:
-                        s1, s2 = 0.5, 0.5
+                r1 = agent_rewards[a1]
+                r2 = agent_rewards[a2]
 
-                    elo_overall[m1] += K_FACTOR * (
-                        s1 - expected_score(elo_overall[m1], elo_overall[m2])
-                    )
-                    elo_overall[m2] += K_FACTOR * (
-                        s2 - expected_score(elo_overall[m2], elo_overall[m1])
-                    )
+                if r1 > r2:
+                    s1, s2 = 1.0, 0.0
+                    wins[m1] += 1
+                elif r2 > r1:
+                    s1, s2 = 0.0, 1.0
+                    wins[m2] += 1
+                else:
+                    s1, s2 = 0.5, 0.5
 
-                    if s1 > s2:
-                        wins[m1] += 1
-                    elif s2 > s1:
-                        wins[m2] += 1
+                # Overall ELO
+                exp1 = expected_score(elo_overall[m1], elo_overall[m2])
+                exp2 = expected_score(elo_overall[m2], elo_overall[m1])
+                elo_overall[m1] += K_FACTOR * (s1 - exp1)
+                elo_overall[m2] += K_FACTOR * (s2 - exp2)
 
-                    total_games[m1] += 1
-                    if m1 != m2:
-                        total_games[m2] += 1
-                    check_processed = True
+                total_pairwise[m1] += 1
+                total_pairwise[m2] += 1
 
-            if check_processed:
-                count += 1
+                # Split ELO: alt role vs main role (team games only)
+                if is_team_game:
+                    exp_alt = expected_score(elo_alt[m1], elo_main[m2])
+                    exp_main = expected_score(elo_main[m2], elo_alt[m1])
+                    elo_alt[m1] += K_FACTOR * (s1 - exp_alt)
+                    elo_main[m2] += K_FACTOR * (s2 - exp_main)
 
         except Exception:
-            # print(f"Error processing {filepath}: {e}")
             continue
 
-    # Generate Stats List
+    # Build stats list
     sorted_models = sorted(
         elo_overall.keys(), key=lambda m: elo_overall[m], reverse=True
     )
     stats_list = []
 
     for rank, model in enumerate(sorted_models, 1):
-        n_games = total_games[model]
-        win_rate = (wins[model] / n_games * 100) if n_games > 0 else 0.0
+        n_pairwise = total_pairwise[model]
+        win_rate = (wins[model] / n_pairwise * 100) if n_pairwise > 0 else 0.0
         display_name = model.split("@")[0].replace("custom/", "")
 
         stats_list.append(
@@ -445,10 +336,10 @@ def process_logs(log_files: list[str]) -> list[dict[str, Any]]:
                 "rank": rank,
                 "model": display_name,
                 "elo": elo_overall[model],
-                "elo_w": elo_wolf[model],
-                "elo_v": elo_villager[model],
+                "elo_w": elo_alt[model],
+                "elo_v": elo_main[model],
                 "win_rate": win_rate,
-                "matches": n_games,
+                "matches": episodes_played[model],
             }
         )
 
