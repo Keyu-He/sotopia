@@ -81,7 +81,6 @@ class MinorityGameActionHandler(ActionHandler):
         if env.current_state == "Choose":
             round_num = env.internal_state.get("round", 0) + 1
             max_rounds = env._config.get("max_rounds", 12)
-            threshold = env._config.get("threshold", 15)
             scores = env.internal_state.get("scores", {})
             total = len(env.agents)
             return (
@@ -89,7 +88,7 @@ class MinorityGameActionHandler(ActionHandler):
                 f"Choose 'go' or 'stay'. {total} players total. "
                 f"Fewer than {total / 2:.1f} go: goers score 3. "
                 f"Otherwise: stayers score 3. Be in the minority! "
-                f"Need {threshold}+ to win; all below {threshold} = all lose."
+                f"Higher total score wins."
             )
         return ""
 
@@ -166,34 +165,26 @@ class MinorityGameEnv(SocialDeductionGame):
 
             max_rounds = self._config.get("max_rounds", 12)
             if round_num >= max_rounds:
-                threshold = self._config.get("threshold", 15)
-                all_below = all(s < threshold for s in scores.values())
-                if all_below:
+                max_score = max(scores.values())
+                min_score = min(scores.values())
+                if max_score == min_score:
                     final = {n: 0.0 for n in scores}
-                    reason = f"Game over. All below {threshold}. Draw. Final: {scores}"
                 else:
-                    max_score = max(scores.values())
-                    min_score = min(scores.values())
-                    if max_score == min_score:
-                        final = {n: 0.0 for n in scores}
-                    else:
-                        sorted_names = sorted(
-                            scores.keys(), key=lambda n: scores[n], reverse=True
-                        )
-                        n_total = len(sorted_names)
-                        top_half = set(sorted_names[: n_total // 2])
-                        bot_half = set(sorted_names[n_total - n_total // 2 :])
-                        final = {}
-                        for name in sorted_names:
-                            if name in top_half:
-                                final[name] = 1.0
-                            elif name in bot_half:
-                                final[name] = -1.0
-                            else:
-                                final[name] = 0.0
-                    reason = (
-                        f"Game over after {max_rounds} rounds. Final scores: {scores}"
+                    sorted_names = sorted(
+                        scores.keys(), key=lambda n: scores[n], reverse=True
                     )
+                    n_total = len(sorted_names)
+                    top_half = set(sorted_names[: n_total // 2])
+                    bot_half = set(sorted_names[n_total - n_total // 2 :])
+                    final = {}
+                    for name in sorted_names:
+                        if name in top_half:
+                            final[name] = 1.0
+                        elif name in bot_half:
+                            final[name] = -1.0
+                        else:
+                            final[name] = 0.0
+                reason = f"Game over after {max_rounds} rounds. Final scores: {scores}"
 
                 self.internal_state["game_over"] = True
                 self.internal_state["final_scores"] = final

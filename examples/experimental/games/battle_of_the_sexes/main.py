@@ -81,14 +81,13 @@ class BattleOfSexesActionHandler(ActionHandler):
             agents = list(env.agents)
             round_num = env.internal_state.get("round", 0) + 1
             max_rounds = env._config.get("max_rounds", 10)
-            threshold = env._config.get("threshold", 28)
             scores = env.internal_state.get("scores", {})
             return (
                 f"Round {round_num}/{max_rounds}. Scores: {scores}. "
                 f"Choose 'opera' or 'football'. "
                 f"Opera: {agents[0]}=3, {agents[1]}=2. "
                 f"Football: {agents[0]}=2, {agents[1]}=3. Mismatch: 0,0. "
-                f"Need {threshold}+ to win; both below {threshold} = both lose."
+                f"Higher total score wins."
             )
         return ""
 
@@ -163,11 +162,7 @@ class BattleOfSexesEnv(SocialDeductionGame):
             max_rounds = self._config.get("max_rounds", 10)
             if round_num >= max_rounds:
                 s1, s2 = scores[a1], scores[a2]
-                threshold = self._config.get("threshold", 28)
-                if s1 < threshold and s2 < threshold:
-                    final = {a1: 0.0, a2: 0.0}
-                    reason = f"Game over. Both below {threshold}. Draw. Final: {scores}"
-                elif s1 > s2:
+                if s1 > s2:
                     final = {a1: 1.0, a2: -1.0}
                     reason = f"Game over. {a1} wins! Final: {scores}"
                 elif s2 > s1:

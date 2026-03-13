@@ -90,13 +90,12 @@ class ChickenActionHandler(ActionHandler):
         if env.current_state == "Choose":
             round_num = env.internal_state.get("round", 0) + 1
             max_rounds = env._config.get("max_rounds", 10)
-            threshold = env._config.get("threshold", 35)
             scores = env.internal_state.get("scores", {})
             return (
                 f"Round {round_num}/{max_rounds}. Scores: {scores}. "
                 f"Choose 'swerve' or 'straight'. "
                 f"Both swerve=3,3. One swerves, one straight=1,5. Both straight=0,0. "
-                f"Need {threshold}+ to win; both below {threshold} = both lose."
+                f"Higher total score wins."
             )
         return ""
 
@@ -176,11 +175,7 @@ class ChickenEnv(SocialDeductionGame):
             max_rounds = self._config.get("max_rounds", 10)
             if round_num >= max_rounds:
                 s1, s2 = scores[a1], scores[a2]
-                threshold = self._config.get("threshold", 35)
-                if s1 < threshold and s2 < threshold:
-                    final = {a1: 0.0, a2: 0.0}
-                    reason = f"Game over. Both below {threshold}. Draw. Final: {scores}"
-                elif s1 > s2:
+                if s1 > s2:
                     final = {a1: 1.0, a2: -1.0}
                     reason = f"Game over. {a1} wins! Final: {scores}"
                 elif s2 > s1:

@@ -60,11 +60,6 @@ class PrisonersDilemmaEvaluator(SocialGameEndEvaluator):
                 agent_names = list(env.agents)
                 scores_dict = {name: scores.get(name, 0) for name in agent_names}
 
-                # Logic:
-                # 1. If both < 10 -> Draw (0)
-                # 2. Otherwise -> Highest score wins (1), Loser (-1)
-                # 3. Tie >= 10 -> Draw (0)
-
                 values = list(scores_dict.values())
                 if len(values) == 2:
                     s1, s2 = values[0], values[1]
@@ -72,18 +67,13 @@ class PrisonersDilemmaEvaluator(SocialGameEndEvaluator):
 
                     rewards = {n1: 0.0, n2: 0.0}
 
-                    if s1 < 10 and s2 < 10:
-                        # Draw (both failed threshold)
-                        pass
-                    elif s1 > s2:
+                    if s1 > s2:
                         rewards[n1] = 1.0
                         rewards[n2] = -1.0
                     elif s2 > s1:
                         rewards[n1] = -1.0
                         rewards[n2] = 1.0
-                    else:
-                        # Tie and at least one >= 10 (which implies both >= 10)
-                        pass
+                    # else: tie -> both 0.0
 
                     for agent_name in agent_names:
                         try:

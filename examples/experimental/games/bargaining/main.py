@@ -112,7 +112,6 @@ class BargainingActionHandler(ActionHandler):
         agents = list(env.agents)
         round_num = env.internal_state.get("round", 0)
         max_rounds = env._config.get("max_rounds", 10)
-        threshold = env._config.get("threshold", 25)
         scores = env.internal_state.get("scores", {})
         proposer_idx = round_num % 2
         proposer = agents[proposer_idx]
@@ -125,7 +124,7 @@ class BargainingActionHandler(ActionHandler):
                     f"You are the PROPOSER. You have 10 tokens to split. "
                     f"Choose 'offer N' where N is how many you keep (opponent gets 10-N). "
                     f"Example: 'offer 6' means you keep 6, opponent gets 4. "
-                    f"Need {threshold}+ total to win; both below {threshold} = both lose."
+                    f"Higher total score wins."
                 )
             else:
                 return (
@@ -142,7 +141,7 @@ class BargainingActionHandler(ActionHandler):
                     f"You are the RESPONDER. {proposer} offers to keep {offer} "
                     f"(you would get {10 - offer}). "
                     f"Choose 'accept' or 'reject'. If rejected, both get 0 this round. "
-                    f"Need {threshold}+ total to win; both below {threshold} = both lose."
+                    f"Higher total score wins."
                 )
             else:
                 return (
@@ -247,11 +246,7 @@ class BargainingEnv(SocialDeductionGame):
             max_rounds = self._config.get("max_rounds", 10)
             if self.internal_state["round"] >= max_rounds:
                 s1, s2 = scores[agents[0]], scores[agents[1]]
-                threshold = self._config.get("threshold", 25)
-                if s1 < threshold and s2 < threshold:
-                    final = {agents[0]: 0.0, agents[1]: 0.0}
-                    reason = f"Game over. Both below {threshold}. Draw. Final: {scores}"
-                elif s1 > s2:
+                if s1 > s2:
                     final = {agents[0]: 1.0, agents[1]: -1.0}
                     reason = f"Game over. {agents[0]} wins! Final: {scores}"
                 elif s2 > s1:

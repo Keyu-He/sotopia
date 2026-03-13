@@ -1,8 +1,8 @@
 {
     "scenario": "Chicken",
-    "description": "Two players play Chicken (Hawk-Dove) for exactly 10 rounds. You cannot speak to the other player. Each round, simultaneously choose 'swerve' or 'straight'. Both swerve = 3 each. One swerves, one goes straight = 1 for swerver, 5 for straight. Both straight = 0 each (crash!). GOAL: Maximize your own score over the 10 rounds. IMPORTANT: If both players score less than 35 points in total, it is a DRAW (both lose). Otherwise, the player with the higher score wins. Players: {agent_names}.",
+    "description": "Two players play Chicken (Hawk-Dove) for exactly 10 rounds. You cannot speak to the other player. Each round, simultaneously choose 'swerve' or 'straight'. Both swerve = 3 each. One swerves, one goes straight = 1 for swerver, 5 for straight. Both straight = 0 each (crash!). GOAL: Maximize your own score over the 10 rounds. The player with the higher total score wins. Players: {agent_names}.",
     "role_goals": {
-        "Player": "Maximize your own score over 10 rounds. You need at least 35 points to have a chance at winning."
+        "Player": "Maximize your own score over 10 rounds. Higher total score wins."
     },
     "role_secrets": {},
     "payoff_matrix": {
