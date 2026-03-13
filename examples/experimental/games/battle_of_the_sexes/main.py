@@ -77,17 +77,23 @@ class BattleOfSexesActionHandler(ActionHandler):
     def get_action_instruction(self, env: SocialDeductionGame, agent_name: str) -> str:
         if not isinstance(env, BattleOfSexesEnv):
             return ""
-        if env.current_state == "Choose":
-            agents = list(env.agents)
-            round_num = env.internal_state.get("round", 0) + 1
-            max_rounds = env._config.get("max_rounds", 10)
-            scores = env.internal_state.get("scores", {})
+        agents = list(env.agents)
+        round_num = env.internal_state.get("round", 0) + 1
+        max_rounds = env._config.get("max_rounds", 10)
+        scores = env.internal_state.get("scores", {})
+        if env.current_state == "Discuss":
             return (
                 f"Round {round_num}/{max_rounds}. Scores: {scores}. "
-                f"Choose 'opera' or 'football'. "
-                f"Opera: {agents[0]}=3, {agents[1]}=2. "
-                f"Football: {agents[0]}=2, {agents[1]}=3. Mismatch: 0,0. "
-                f"Higher total score wins."
+                f"DISCUSSION PHASE: Negotiate with the other player to agree on a venue. "
+                f"Opera: {agents[0]}=3, {agents[1]}=2. Football: {agents[0]}=2, {agents[1]}=3. "
+                f"Mismatch: 0,0. Speak freely to coordinate."
+            )
+        if env.current_state == "Choose":
+            return (
+                f"Round {round_num}/{max_rounds}. Scores: {scores}. "
+                f"CHOICE PHASE: Simultaneously choose 'opera' or 'football'. "
+                f"Opera: {agents[0]}=3, {agents[1]}=2. Football: {agents[0]}=2, {agents[1]}=3. "
+                f"Mismatch: 0,0. Higher total score wins."
             )
         return ""
 
@@ -211,7 +217,7 @@ def create_environment(
         env_profile=env_profile,
         config=config,
         model_name=model_name,
-        evaluators=[BattleOfSexesEvaluator(max_turn_number=10)],
+        evaluators=[BattleOfSexesEvaluator(max_turn_number=35)],
         terminal_evaluators=[],
         hide_unknown=True,
     )
