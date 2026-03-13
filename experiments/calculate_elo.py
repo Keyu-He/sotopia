@@ -9,6 +9,10 @@ from typing import Any, Dict
 K_FACTOR = 32
 STARTING_ELO = 1200
 
+# Games where the optimal outcome requires cooperation / coordination.
+# These are excluded from the main competitive ELO and shown separately.
+COOPERATIVE_GAMES = {"battle_of_the_sexes", "stag_hunt"}
+
 
 def expected_score(rating_a: float, rating_b: float) -> float:
     return 1 / (1 + 10 ** ((rating_b - rating_a) / 400))
@@ -113,32 +117,35 @@ def generate_single_table_html(
     return table_html
 
 
-def generate_html_report(tables_data: Dict[str, list[dict[str, Any]]]) -> str:
+def generate_html_report(
+    competitive_tables: Dict[str, list[dict[str, Any]]],
+    cooperative_tables: Dict[str, list[dict[str, Any]]],
+) -> str:
     """
-    Generates the full HTML report with multiple tables.
-    tables_data: { "Title": stats_list, ... }
+    Generates the full HTML report.
+    competitive_tables / cooperative_tables: { "Title": stats_list, ... }
     """
 
-    # Generate HTML for all tables
-    all_tables_html = ""
+    def render_section(
+        tables: Dict[str, list[dict[str, Any]]], overall_key: str
+    ) -> str:
+        html = ""
+        if overall_key in tables:
+            html += generate_single_table_html(
+                f"{overall_key} Leaderboard", tables[overall_key], show_split_elo=True
+            )
+        for title in sorted(t for t in tables if t != overall_key):
+            lower_title = title.lower()
+            is_symmetric = "rock" in lower_title or "prisoner" in lower_title
+            html += generate_single_table_html(
+                f"{title} Leaderboard",
+                tables[title],
+                show_split_elo=not is_symmetric,
+            )
+        return html
 
-    # Ensure "Overall" comes first if present
-    if "Overall" in tables_data:
-        all_tables_html += generate_single_table_html(
-            "Overall Leaderboard", tables_data["Overall"], show_split_elo=True
-        )
-
-    sorted_titles = sorted([t for t in tables_data.keys() if t != "Overall"])
-    for title in sorted_titles:
-        # Determine if we should show split ELO
-        # Symmetric games: RPS, Prisoners Dilemma -> No split
-        lower_title = title.lower()
-        is_symmetric = "rock" in lower_title or "prisoner" in lower_title
-        show_split = not is_symmetric
-
-        all_tables_html += generate_single_table_html(
-            f"{title} Leaderboard", tables_data[title], show_split_elo=show_split
-        )
+    competitive_html = render_section(competitive_tables, "Competitive Overall")
+    cooperative_html = render_section(cooperative_tables, "Cooperative Overall")
 
     html_template = f"""
     <!DOCTYPE html>
@@ -152,6 +159,8 @@ def generate_html_report(tables_data: Dict[str, list[dict[str, Any]]]) -> str:
             h1 {{ font-size: 28px; font-weight: 700; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #eee; padding-bottom: 20px; }}
             h1::before {{ content: "🏆"; font-size: 32px; }}
             h2 {{ font-size: 20px; font-weight: 600; margin-top: 40px; margin-bottom: 15px; color: #444; }}
+            h3 {{ font-size: 16px; font-weight: 600; color: #888; margin: 10px 0 5px; text-transform: uppercase; letter-spacing: 1px; border-left: 4px solid #ccc; padding-left: 10px; }}
+            .section-divider {{ margin: 60px 0 30px; border-top: 2px dashed #eee; padding-top: 30px; }}
             table {{ width: 100%; border-collapse: collapse; min-width: 800px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden; }}
             th {{ text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #666; padding: 12px 16px; background-color: #f9f9f9; border-bottom: 1px solid #eee; }}
             td {{ padding: 12px 16px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }}
@@ -166,7 +175,6 @@ def generate_html_report(tables_data: Dict[str, list[dict[str, Any]]]) -> str:
             .matches {{ font-weight: 500; font-size: 14px; width: 80px; text-align: right; color: #666; }}
             .footer {{ margin-top: 50px; font-size: 13px; color: #888; border-top: 1px solid #eee; padding-top: 20px; }}
             .provider-icon {{ width: 10px; height: 10px; border-radius: 50%; background-color: #ddd; display: inline-block; }}
-
             /* Rank Colors */
             tr:nth-child(1) .rank {{ color: #d4af37; }}
             tr:nth-child(2) .rank {{ color: #c0c0c0; }}
@@ -176,15 +184,26 @@ def generate_html_report(tables_data: Dict[str, list[dict[str, Any]]]) -> str:
     <body>
         <h1>Social Games Tournament Results</h1>
 
-        {all_tables_html}
+        <h3>⚔️ Competitive Games</h3>
+        {competitive_html}
+
+        <div class="section-divider">
+            <h3>🤝 Cooperative / Coordination Games</h3>
+            <p style="color:#888; font-size:13px; margin-bottom:20px;">
+                These games test coordination ability rather than competitive skill.
+                ELO here reflects how well a model navigates coordination under conflicting preferences.
+            </p>
+            {cooperative_html}
+        </div>
 
         <div class="footer">
             <p><strong>Metrics Explanation:</strong></p>
             <ul>
-                <li><strong>ELO:</strong> Overall rating across all processed games.</li>
+                <li><strong>ELO:</strong> Rating computed from pairwise comparisons within each game category.</li>
                 <li><strong>ELO-Alt:</strong> Rating as the minority/hidden role (Werewolf, Spy, Undercover).</li>
                 <li><strong>ELO-Main:</strong> Rating as the majority role (Villager, Non-Spy, Civilian).</li>
-                <li>Symmetric games (RPS, Prisoner's Dilemma) contribute to Overall ELO but treat roles symmetrically.</li>
+                <li><strong>Win Rate:</strong> Fraction of pairwise comparisons won (~50% expected for equal competition).</li>
+                <li>Cooperative games (Battle of the Sexes, Stag Hunt) are excluded from the competitive ELO.</li>
             </ul>
         </div>
     </body>
@@ -384,78 +403,71 @@ def save_to_csv(title: str, stats: list[dict[str, Any]]) -> None:
 def calculate_elo(log_dir: str = "logs") -> None:
     print(f"Calculating ELO from logs in: {log_dir}")
 
-    # Gather logs
     log_files = glob.glob(os.path.join(log_dir, "*.json"))
+    print(f"Found {len(log_files)} items")
 
-    # User requested to process ALL logs, no filtering.
-    filtered_Logs = log_files
+    # 1. Group logs by game, splitting competitive vs cooperative
+    competitive_by_game: Dict[str, list[str]] = defaultdict(list)
+    cooperative_by_game: Dict[str, list[str]] = defaultdict(list)
 
-    print(f"Found {len(filtered_Logs)} items")
-
-    # 1. Group logs by Game
-    logs_by_game: Dict[str, list[str]] = defaultdict(list)
-
-    for filepath in filtered_Logs:
+    for filepath in log_files:
         try:
             with open(filepath, "r") as f:
-                header = json.load(f)
-                metadata = header.get("metadata", {})
-                game_name = metadata.get("game_name", "Unknown")
-
-                # Robust detection if metadata missing but keys present
-                if game_name == "Unknown":
-                    # Fallback check based on keys
-                    if "Werewolves_model" in metadata:
-                        game_name = "Werewolves"
-                    elif "Spy_model" in metadata:
-                        game_name = "Spyfall"
-                    elif "Undercover_model" in metadata:
-                        game_name = "Undercover"
-                    else:
-                        # Fallback to env string
-                        print("Unknown game name, falling back to env string")
-                        env = header.get("environment", "")
-                        if "werewolf" in env.lower():
-                            game_name = "werewolves"
-                        elif "spyfall" in env.lower():
-                            game_name = "spyfall"
-                        elif "prison" in env.lower():
-                            game_name = "prisoners_dilemma"
-                        elif "rock" in env.lower():
-                            game_name = "rock_paper_scissors"
-
-                logs_by_game[game_name].append(filepath)
+                data = json.load(f)
+            metadata = data.get("metadata", {})
+            game_name = metadata.get("game_name", "Unknown")
+            bucket = (
+                cooperative_by_game
+                if game_name in COOPERATIVE_GAMES
+                else competitive_by_game
+            )
+            bucket[game_name].append(filepath)
         except Exception:
             continue
 
-    # 2. Calculate Stats
-    all_tables_data = {}
+    competitive_logs = [f for files in competitive_by_game.values() for f in files]
+    cooperative_logs = [f for files in cooperative_by_game.values() for f in files]
 
-    # Overall
-    print("Processing Overall...")
-    overall_stats = process_logs(filtered_Logs)
-    all_tables_data["Overall"] = overall_stats
-    save_to_csv("Overall", overall_stats)
+    # 2. Competitive tables
+    competitive_tables: Dict[str, list[dict[str, Any]]] = {}
 
-    # Per Game
-    for game_name, game_logs in logs_by_game.items():
+    print("Processing Competitive Overall...")
+    competitive_tables["Competitive Overall"] = process_logs(competitive_logs)
+    save_to_csv("Competitive Overall", competitive_tables["Competitive Overall"])
+
+    for game_name, game_logs in sorted(competitive_by_game.items()):
         if not game_name or game_name == "Unknown":
             continue
         print(f"Processing {game_name} ({len(game_logs)} games)...")
-        # Format title case
         title = game_name.replace("_", " ").title()
         stats = process_logs(game_logs)
-        all_tables_data[title] = stats
+        competitive_tables[title] = stats
         save_to_csv(title, stats)
 
-    # 3. Generate HTML
-    html_content = generate_html_report(all_tables_data)
+    # 3. Cooperative tables
+    cooperative_tables: Dict[str, list[dict[str, Any]]] = {}
+
+    if cooperative_logs:
+        print("Processing Cooperative Overall...")
+        cooperative_tables["Cooperative Overall"] = process_logs(cooperative_logs)
+        save_to_csv("Cooperative Overall", cooperative_tables["Cooperative Overall"])
+
+        for game_name, game_logs in sorted(cooperative_by_game.items()):
+            print(f"Processing {game_name} ({len(game_logs)} games)...")
+            title = game_name.replace("_", " ").title()
+            stats = process_logs(game_logs)
+            cooperative_tables[title] = stats
+            save_to_csv(title, stats)
+
+    # 4. Generate HTML
+    html_content = generate_html_report(competitive_tables, cooperative_tables)
     output_html = os.path.join("experiments", "elo_leaderboard.html")
     with open(output_html, "w") as f:
         f.write(html_content)
 
     print(f"\nSuccessfully generated {output_html}")
-    print("Tables generated for:", ", ".join(all_tables_data.keys()))
+    all_titles = list(competitive_tables) + list(cooperative_tables)
+    print("Tables generated for:", ", ".join(all_titles))
 
 
 if __name__ == "__main__":
