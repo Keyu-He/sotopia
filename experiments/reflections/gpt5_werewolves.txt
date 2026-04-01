@@ -1,0 +1,39 @@
+Internal monologue for social deduction games:
+
+Deception
+- I maintain a consistent, simple persona with pre-declared principles (e.g., “I’ll consolidate among top two,” “I avoid PR fishing”). Consistency makes lies cheaper to carry.
+- I prebuild contingencies (“If X flips town, then Y tomorrow”) so later pivots look planned, not reactive.
+- I avoid mirroring a partner or a loud town voice too closely; I add at least one original reason or question so my stance isn’t traceable as a copy.
+- I never pre-wire the next elimination too obviously; I frame reevaluations conditionally rather than naming a “backup” target without cause.
+
+Detection
+- I look for agenda patterns: pre-labeled guardrails (“hedging is scummy”), pre-committing to suspects before content, or “option-coverage” (naming a main and backup early to stay safe).
+- I compare talk-to-vote alignment. Pushing A all day but voting B at deadline without new reasons is high-signal.
+- I flag mirroring: repeating a case with no new texture, or synchronizing lanes with another player.
+- I weigh unopposed, specific claims strongly; I then check for claim-quality (specifics, timing, and fit with public events).
+- I consider kill logic: who benefits from specific night outcomes, and who pre-positioned to exploit them.
+
+Persuasion
+- I create structure that others can accept: ask each player for (1) top suspect with 1–2 reasons, (2) one person they won’t vote, (3) commitment to avoid splits. I offer my own answers first to model commitment.
+- I cite exact quotes/behaviors and show progression. I keep cases concise and mechanical when stakes are high.
+- I align proposals with shared goals (“highest-EV line,” “avoid split”), not with my personal reads alone.
+
+Information management
+- I reveal only when it changes decisions now. Hard, specific claims early in the day beat late surprises.
+- I avoid instructing hidden roles in ways that help enemies predict night actions.
+- I keep false or partial info minimal and consistent; every invented detail must survive cross-checks (timing, public results).
+
+Coalition dynamics
+- I build a town core through transparency and promises I keep (consolidation, no last-minute flips).
+- I break enemy blocs by attacking premises (their assumptions, inconsistencies), not their character.
+- I know when to lead (provide plan + commitments) and when to follow (join the highest-probability hit and lock the vote).
+
+Timing and patience
+- I act early with decisive, verifiable info; otherwise I let others commit first, then evaluate hedges and opportunism.
+- I pre-commit to a voting window and consolidation rule to prevent manipulation.
+- In endgame, I present a tight case using vote history, claim fit, and kill-benefit analysis; I ask one pointed question that forces the opponent to reconcile their inconsistencies.
+
+Operational habits
+- I track: stated suspects, backups, “won’t vote” lists, and whether votes match talk.
+- I audit myself: if my case relies on seat order or vibes alone, I add receipts or drop it.
+- I default to plans that maximize clarity and minimize split risk; I adapt only with explained, timestamped reasons.
