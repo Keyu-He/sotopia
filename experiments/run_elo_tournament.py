@@ -35,39 +35,30 @@ async def run_elo_tournament(
     print(f"Concurrency: {concurrency_limit}")
     print("\n" + "=" * 50)
 
-    semaphore = asyncio.Semaphore(concurrency_limit)  # Limit concurrent API calls
+    semaphore = asyncio.Semaphore(concurrency_limit)
 
-    # Refactor: Define worker properly to avoid closure issues if defined once
-    # Better to define it inside the loop or pass args.
+    # 1. Scan executed rosters from existing logs
+    # Key: "roster_dir/roster_file" for uniqueness across experiments
+    executed_rosters = set()
+    existing_logs = glob.glob(os.path.join("logs", "*.json"))
+    for log_file in existing_logs:
+        try:
+            with open(log_file, "r") as f:
+                data = json.load(f)
+                meta = data.get("metadata", {})
+                r_file = meta.get("roster_file", "")
+                r_dir = meta.get("roster_dir", "")
+                if r_file:
+                    executed_rosters.add(f"{r_dir}/{r_file}" if r_dir else r_file)
+        except Exception as e:
+            print(f"Error reading log file {log_file}: {e}")
+    print(f"Found {len(executed_rosters)} already executed rosters.")
+
+    # 2. Collect all rosters across all games
+    all_rosters: list[tuple[str, str]] = []  # (game_name, roster_path)
+    game_modules: dict[str, any] = {}
 
     for game_name in game_names:
-        print(f"Scanning rosters for game: {game_name}")
-
-        # 1. Scan EXISTING LOGS to identify played rosters
-        # We look for metadata["roster_file"] in the logs
-        executed_rosters = set()
-        log_pattern = os.path.join("logs", "*.json")
-        existing_logs = glob.glob(log_pattern)
-
-        # Optimization: Only scan logs relevant to this game?
-        # But filename parsing is fast enough for <2000 files.
-        for log_file in existing_logs:
-            try:
-                with open(log_file, "r") as f:
-                    # Partial read might be faster but JSON load is safe
-                    data = json.load(f)
-                    meta = data.get("metadata", {})
-                    r_file = meta.get("roster_file")
-                    if r_file:
-                        executed_rosters.add(r_file)
-            except Exception as e:
-                print(f"Error reading log file {log_file}: {e}")
-                continue
-
-        print(
-            f"  Found {len(executed_rosters)} already executed rosters (across all games)."
-        )
-
         roster_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "rosters", roster_dir, game_name)
             if roster_dir
@@ -75,127 +66,109 @@ async def run_elo_tournament(
         )
         roster_files = sorted(glob.glob(os.path.join(roster_path, "*.json")))
 
-        if not roster_files:
-            print(f"  No rosters found in {roster_path}")
+        remaining = [
+            r
+            for r in roster_files
+            if f"{roster_dir}/{os.path.basename(r)}" not in executed_rosters
+        ]
+        print(f"  {game_name}: {len(remaining)}/{len(roster_files)} rosters to run")
+
+        if not remaining:
             continue
 
-        print(f"  Found {len(roster_files)} total rosters.")
-
-        # Filter out executed rosters
-        rosters_to_run = []
-        for r_path in roster_files:
-            r_filename = os.path.basename(r_path)
-            if r_filename in executed_rosters:
-                continue
-            rosters_to_run.append(r_path)
-
-        print(f"  {len(rosters_to_run)} rosters remaining to execute.")
-
-        if not rosters_to_run:
-            continue
-
-        # Load Game Module
         try:
-            game_module = get_game_module(game_name)
-            prepare_scenario = game_module.prepare_scenario
+            game_modules[game_name] = get_game_module(game_name)
         except Exception as e:
-            print(f"  Error loading game module: {e}")
+            print(f"  Error loading game module for {game_name}: {e}")
             continue
 
-        async def _worker(roster_path: str) -> None:
-            async with semaphore:
-                filename = os.path.basename(roster_path)
-                # Double check to prevent race condition if logs updated mid-run?
-                # Not strictly necessary for this scale.
+        for r in remaining:
+            all_rosters.append((game_name, r))
 
-                try:
-                    with open(roster_path, "r") as f:
-                        roster_config = json.load(f)
+    print(f"\nTotal rosters to run: {len(all_rosters)}")
 
-                    base_config = load_game_config(game_name)
-                    episode_config = base_config.copy()
-                    episode_config.update(roster_config)
+    if not all_rosters:
+        print("Nothing to do.")
+        return
 
-                    agent_model_list = [
-                        a["agent_model"] for a in episode_config["agents"]
-                    ]
-                    parts = filename.replace(".json", "").split("_")
-                    match_str = "unknown"
-                    for p in parts:
-                        if p.startswith("match"):
-                            match_str = p
+    # 3. Define worker that handles any game
+    async def _worker(game_name: str, roster_path: str) -> None:
+        async with semaphore:
+            filename = os.path.basename(roster_path)
+            try:
+                with open(roster_path, "r") as f:
+                    roster_config = json.load(f)
 
-                    agents_conf = episode_config["agents"]
-                    teams = set(a.get("team") for a in agents_conf if a.get("team"))
+                base_config = load_game_config(game_name)
+                episode_config = base_config.copy()
+                episode_config.update(roster_config)
 
-                    unique_models = sorted(list(set(agent_model_list)))
-                    model_a_log = (
-                        unique_models[0] if len(unique_models) > 0 else "unknown"
-                    )
-                    model_b_log = (
-                        unique_models[1] if len(unique_models) > 1 else "unknown"
-                    )
+                agent_model_list = [a["agent_model"] for a in episode_config["agents"]]
+                agents_conf = episode_config["agents"]
+                teams = set(a.get("team") for a in agents_conf if a.get("team"))
 
-                    metadata = {
-                        "game_name": game_name,
-                        "model_a": model_a_log,
-                        "model_b": model_b_log,
-                        "pair_idx": match_str,
-                        "roster_file": filename,
-                    }
+                unique_models = sorted(list(set(agent_model_list)))
+                model_a_log = unique_models[0] if len(unique_models) > 0 else "unknown"
+                model_b_log = (
+                    unique_models[1] if len(unique_models) > 1 else model_a_log
+                )
 
-                    # Add Team-specific model info (e.g. Civilians_model: gpt-4o)
-                    if len(teams) > 1:
-                        for team_name in teams:
-                            # Find model(s) for this team
-                            team_models = set(
-                                a["agent_model"]
-                                for a in agents_conf
-                                if a.get("team") == team_name
-                            )
-                            if len(team_models) == 1:
-                                metadata[f"{team_name}_model"] = list(team_models)[0]
-                            else:
-                                metadata[f"{team_name}_model"] = (
-                                    "mixed"  # Should not happen
-                                )
+                metadata = {
+                    "game_name": game_name,
+                    "model_a": model_a_log,
+                    "model_b": model_b_log,
+                    "roster_file": filename,
+                    "roster_dir": roster_dir,
+                }
 
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                    log_filename = (
-                        f"episode_{tag}_{game_name}_{match_str}_{timestamp}.json"
-                    )
-                    log_path = os.path.join("logs", log_filename)
+                if len(teams) > 1:
+                    for team_name in teams:
+                        team_models = set(
+                            a["agent_model"]
+                            for a in agents_conf
+                            if a.get("team") == team_name
+                        )
+                        if len(team_models) == 1:
+                            metadata[f"{team_name}_model"] = list(team_models)[0]
+                        else:
+                            metadata[f"{team_name}_model"] = "mixed"
 
-                    env, agents = prepare_scenario(
-                        env_model_name="gpt-4o",
-                        agent_model_name=agent_model_list,
-                        config=episode_config,
-                    )
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                log_filename = f"episode_{tag}_{game_name}_{timestamp}.json"
+                log_path = os.path.join("logs", log_filename)
 
-                    os.makedirs("logs", exist_ok=True)
+                prepare_scenario = game_modules[game_name].prepare_scenario
+                env, agents = prepare_scenario(
+                    env_model_name="gpt-4o",
+                    agent_model_name=agent_model_list,
+                    config=episode_config,
+                )
 
-                    await arun_one_episode(
-                        env=env,
-                        agent_list=agents,
-                        tag=tag,
-                        push_to_db=push_to_db,
-                        output_path=log_path,
-                        metadata=metadata,
-                    )
-                except Exception as e:
-                    import traceback
+                os.makedirs("logs", exist_ok=True)
 
-                    print(f"\nERROR in {filename}: {e}\n{traceback.format_exc()}")
+                await arun_one_episode(
+                    env=env,
+                    agent_list=agents,
+                    tag=tag,
+                    push_to_db=push_to_db,
+                    output_path=log_path,
+                    metadata=metadata,
+                )
+            except Exception as e:
+                import traceback
 
-        # Create tasks
-        tasks = [asyncio.create_task(_worker(p)) for p in rosters_to_run]
+                print(f"\nERROR in {filename}: {e}\n{traceback.format_exc()}")
 
-        # Use TQDM with asyncio
-        print(f"  Queuing {len(tasks)} tasks...")
-        for f in tqdm(
-            asyncio.as_completed(tasks), total=len(tasks), desc=f"Playing {game_name}"
-        ):
-            await f
+    # 4. Launch all rosters across all games concurrently
+    tasks = [
+        asyncio.create_task(_worker(game_name, r_path))
+        for game_name, r_path in all_rosters
+    ]
+    print(f"Queuing {len(tasks)} tasks (concurrency={concurrency_limit})...")
+    for f in tqdm(
+        asyncio.as_completed(tasks), total=len(tasks), desc="Playing all games"
+    ):
+        await f
 
     print("\nAll Scheduled Rosters Executed.")
 
