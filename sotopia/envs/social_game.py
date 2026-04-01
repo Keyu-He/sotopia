@@ -18,7 +18,8 @@ from sotopia.messages import AgentAction, Observation, SimpleMessage, Message
 
 logger = logging.getLogger(__name__)
 
-SOCIAL_GAME_PROMPT_TEMPLATE = """
+SOCIAL_GAME_PROMPT_TEMPLATE = """{reflection}
+
 Imagine you are playing the game as {agent}.
 
 Here is the description of the game: {description}

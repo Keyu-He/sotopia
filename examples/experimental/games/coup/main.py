@@ -771,6 +771,22 @@ def create_agents(
     model_name: str | Dict[str, str] | List[str],
     config: Dict[str, Any],
 ) -> List[LLMAgent]:
+    # Load reflection file if specified
+    _reflection_file = config.get("reflection_file", "")
+    _reflection_text = ""
+    _any_needs_reflection = any(
+        a.get("include_reflection") for a in config.get("agents", [])
+    )
+    if _any_needs_reflection and not _reflection_file:
+        raise ValueError(
+            "Some agents have include_reflection=true but no reflection_file is specified in config"
+        )
+    if _reflection_file:
+        if not os.path.exists(_reflection_file):
+            raise FileNotFoundError(f"Reflection file not found: {_reflection_file}")
+        with open(_reflection_file) as _rf:
+            _reflection_text = _rf.read().strip()
+
     agents = []
     for idx, profile in enumerate(agent_profiles):
         agent_name = f"{profile.first_name}{' ' + profile.last_name if profile.last_name else ''}"
@@ -782,6 +798,13 @@ def create_agents(
             SOCIAL_GAME_PROMPT_TEMPLATE.replace("{description}", env_profile.scenario)
             .replace("{secret}", f"Your secret info: {secrets}")
             .replace("{goal}", role_goal)
+            .replace(
+                "{reflection}",
+                _reflection_text
+                if idx < len(config.get("agents", []))
+                and config["agents"][idx].get("include_reflection")
+                else "",
+            )
         )
 
         if isinstance(model_name, dict):

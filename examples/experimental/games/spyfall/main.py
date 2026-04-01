@@ -335,6 +335,22 @@ def create_agents(
     config: Dict[str, Any],
 ) -> List[LLMAgent]:
     """Create LLM agents."""
+    # Load reflection file if specified
+    _reflection_file = config.get("reflection_file", "")
+    _reflection_text = ""
+    _any_needs_reflection = any(
+        a.get("include_reflection") for a in config.get("agents", [])
+    )
+    if _any_needs_reflection and not _reflection_file:
+        raise ValueError(
+            "Some agents have include_reflection=true but no reflection_file is specified in config"
+        )
+    if _reflection_file:
+        if not os.path.exists(_reflection_file):
+            raise FileNotFoundError(f"Reflection file not found: {_reflection_file}")
+        with open(_reflection_file) as _rf:
+            _reflection_text = _rf.read().strip()
+
     agents = []
     for idx, profile in enumerate(agent_profiles):
         # Calculate secrets
@@ -353,6 +369,13 @@ def create_agents(
             .replace(
                 "{goal}",
                 role_goal,
+            )
+            .replace(
+                "{reflection}",
+                _reflection_text
+                if idx < len(config.get("agents", []))
+                and config["agents"][idx].get("include_reflection")
+                else "",
             )
         )
 
