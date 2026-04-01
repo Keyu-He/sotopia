@@ -5,6 +5,7 @@ import itertools
 import json
 import argparse
 import glob
+import math
 
 # Add project root to path to allow imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -95,6 +96,40 @@ NAME_POOL = [
 ]
 
 
+def _check_unseeded_rosters(roster_output_dir: str) -> bool:
+    """Check if existing rosters lack a seed. Returns True if safe to proceed."""
+    existing = glob.glob(os.path.join(roster_output_dir, "*.json"))
+    unseeded = []
+    for f in existing:
+        try:
+            with open(f) as fh:
+                data = json.load(fh)
+            if "seed" not in data:
+                unseeded.append(os.path.basename(f))
+        except Exception:
+            continue
+    if unseeded:
+        print(
+            f"  WARNING: {len(unseeded)} existing rosters have no seed (not reproducible)."
+        )
+        print(f"  Examples: {unseeded[:3]}")
+        resp = input("  Overwrite unseeded rosters? [y/N]: ").strip().lower()
+        return resp == "y"
+    return True
+
+
+def _make_roster(current_config: dict, roster_seed: int) -> None:
+    """Apply seed, shuffle agents/names, store seed in config."""
+    random.seed(roster_seed)
+    agents = current_config["agents"]
+    random.shuffle(agents)
+    name_pool = NAME_POOL.copy()
+    random.shuffle(name_pool)
+    for idx, agent in enumerate(agents):
+        agent["name"] = name_pool[idx]
+    current_config["seed"] = roster_seed
+
+
 def generate_rosters(
     game_names: list[str],
     models: list[str],
@@ -102,6 +137,11 @@ def generate_rosters(
     overwrite: bool = False,
     challenger: str | None = None,
     roster_dir: str = "",
+    seed: int = 42,
+    reflection_file: str = "",
+    reflect_team: str = "",
+    reflect_model: str = "",
+    no_swap: bool = False,
 ) -> None:
     """
     Generate roster files for ELO tournament.
@@ -109,17 +149,28 @@ def generate_rosters(
     Team-based games (2 distinct teams): pairwise matchups.
       team_episodes = max(1, ceil(individual_scenarios / num_pairs))
     Individual games (no teams / 1 team): random model per player slot, individual_scenarios total.
+
+    Uses a deterministic seed for reproducibility. Each roster gets
+    seed = base_seed + roster_index so results are deterministic but distinct.
+
+    For self-play (1 model): all agents use the same model.
+    For team games with 2 models: even split — half with model A as team1, half swapped.
+    For reflection: --reflection-file and --reflect-team inject reflection into one team.
     """
-    import math
 
     if not isinstance(game_names, list):
         game_names = [game_names]
 
-    num_pairs = len(list(itertools.permutations(models, 2)))
-    team_episodes = max(1, math.ceil(individual_scenarios / num_pairs))
+    num_pairs = len(list(itertools.permutations(models, 2))) if len(models) >= 2 else 0
+    team_episodes = (
+        max(1, math.ceil(individual_scenarios / num_pairs))
+        if num_pairs > 0
+        else individual_scenarios
+    )
 
     print(f"Generating rosters for games: {game_names}")
     print(f"Competitors: {models}")
+    print(f"Seed: {seed}")
     print(
         f"Team games: {num_pairs} pairs × {team_episodes} eps each (ceil({individual_scenarios}/{num_pairs}))"
     )
@@ -135,8 +186,8 @@ def generate_rosters(
             print(f"  Error loading template for '{game_name}': {e}")
             continue
 
-        if len(models) < 2:
-            print(f"  Skipping {game_name}: Need at least 2 models.")
+        if len(models) < 1:
+            print(f"  Skipping {game_name}: Need at least 1 model.")
             continue
 
         roster_output_dir = os.path.abspath(
@@ -152,27 +203,47 @@ def generate_rosters(
         unique_teams = sorted({a.get("team") for a in sample_agents if a.get("team")})
         is_team_game = len(unique_teams) == 2
 
+        # Check for unseeded existing rosters if overwriting
+        if overwrite and not _check_unseeded_rosters(roster_output_dir):
+            print(f"  Skipping {game_name} (user declined overwrite)")
+            continue
+
+        # Global roster counter for seed offset
+        roster_counter = 0
         count = 0
 
         if is_team_game:
             # --- TEAM GAME: pairwise, team_episodes per pair ---
             print(f"  Type: team-based ({unique_teams[0]} vs {unique_teams[1]})")
-            for pair_idx, (model_a, model_b) in enumerate(
-                itertools.permutations(models, 2)
-            ):
+            t1, t2 = unique_teams[0], unique_teams[1]
+
+            # Self-play: single model on both teams
+            if len(models) == 1:
+                pairs = [(models[0], models[0])]
+            elif len(models) == 2 and not no_swap:
+                # Even split: half with A as t1, half with B as t1
+                half = individual_scenarios // 2
+                pairs = [(models[0], models[1]), (models[1], models[0])]
+                team_episodes = half
+                print(f"  Even split: {half} eps per side")
+            elif len(models) == 2 and no_swap:
+                # Fixed assignment: models[0] always on t1, models[1] always on t2
+                pairs = [(models[0], models[1])]
+                team_episodes = individual_scenarios
+                print(f"  Fixed assignment: {models[0]} as {t1}, {models[1]} as {t2}")
+            else:
+                pairs = list(itertools.permutations(models, 2))
+
+            for pair_idx, (model_a, model_b) in enumerate(pairs):
                 if challenger and challenger not in (model_a, model_b):
                     continue
-                sanitized_m1 = model_a.split("@")[0].split("/")[-1]
-                sanitized_m2 = model_b.split("@")[0].split("/")[-1]
                 for i in range(team_episodes):
-                    filename = f"roster_{game_name}_match{pair_idx}_ep{i}_{sanitized_m1}_vs_{sanitized_m2}.json"
+                    filename = (
+                        f"roster_{game_name}_{roster_dir}_ep{roster_counter}.json"
+                    )
                     file_path = os.path.join(roster_output_dir, filename)
-                    semantic_suffix = f"ep{i}_{sanitized_m1}_vs_{sanitized_m2}.json"
-                    if not overwrite and glob.glob(
-                        os.path.join(roster_output_dir, f"*{semantic_suffix}")
-                    ):
-                        continue
                     if not overwrite and os.path.exists(file_path):
+                        roster_counter += 1
                         continue
 
                     try:
@@ -182,7 +253,6 @@ def generate_rosters(
                         continue
 
                     agents = current_config["agents"]
-                    t1, t2 = unique_teams[0], unique_teams[1]
                     for agent in agents:
                         if agent.get("team") == t1:
                             agent["agent_model"] = model_a
@@ -191,23 +261,75 @@ def generate_rosters(
                         else:
                             agent["agent_model"] = model_a
 
-                    random.shuffle(agents)
-                    name_pool = NAME_POOL.copy()
-                    random.shuffle(name_pool)
-                    for idx, agent in enumerate(agents):
-                        agent["name"] = name_pool[idx]
+                    # Reflection: tag agents whose model matches reflect_model AND team matches reflect_team
+                    if reflection_file and (reflect_team or reflect_model):
+                        current_config["reflection_file"] = os.path.abspath(
+                            reflection_file
+                        )
+                        for agent in agents:
+                            team_match = (
+                                (agent.get("team") == reflect_team)
+                                if reflect_team
+                                else True
+                            )
+                            model_match = (
+                                (reflect_model in agent.get("agent_model", ""))
+                                if reflect_model
+                                else True
+                            )
+                            agent["include_reflection"] = team_match and model_match
+
+                    _make_roster(current_config, seed + roster_counter)
+                    roster_counter += 1
+
+                    with open(file_path, "w") as f:
+                        json.dump(current_config, f, indent=4)
+                    count += 1
+
+        elif len(sample_agents) == 2:
+            # --- 2-PLAYER INDIVIDUAL GAME: pairwise matchups ---
+            pairs = list(itertools.combinations(models, 2))
+            pair_episodes = max(1, math.ceil(individual_scenarios / len(pairs)))
+            print(
+                f"  Type: individual (2 players), {len(pairs)} pairs × {pair_episodes} eps"
+            )
+            for pair_idx, (model_a, model_b) in enumerate(pairs):
+                if challenger and challenger not in (model_a, model_b):
+                    continue
+                for i in range(pair_episodes):
+                    filename = (
+                        f"roster_{game_name}_{roster_dir}_ep{roster_counter}.json"
+                    )
+                    file_path = os.path.join(roster_output_dir, filename)
+                    if not overwrite and os.path.exists(file_path):
+                        roster_counter += 1
+                        continue
+
+                    try:
+                        current_config = load_roster_template(game_name)
+                    except Exception as e:
+                        print(f"  Error loading template: {e}")
+                        continue
+
+                    agents = current_config["agents"]
+                    agents[0]["agent_model"] = model_a
+                    agents[1]["agent_model"] = model_b
+
+                    _make_roster(current_config, seed + roster_counter)
+                    roster_counter += 1
 
                     with open(file_path, "w") as f:
                         json.dump(current_config, f, indent=4)
                     count += 1
 
         else:
-            # --- INDIVIDUAL GAME: random model per player slot ---
+            # --- MULTI-PLAYER INDIVIDUAL GAME: random model per player slot ---
             print(f"  Type: individual ({len(sample_agents)} players)")
             for i in range(individual_scenarios):
-                filename = f"roster_{game_name}_scenario{i}.json"
+                filename = f"roster_{game_name}_{roster_dir}_ep{roster_counter}.json"
                 file_path = os.path.join(roster_output_dir, filename)
                 if not overwrite and os.path.exists(file_path):
+                    roster_counter += 1
                     continue
 
                 try:
@@ -219,8 +341,10 @@ def generate_rosters(
                 agents = current_config["agents"]
                 n_agents = len(agents)
 
-                # Assign random model to each player slot (sample without replacement
-                # if possible, else with replacement)
+                # Seed for model assignment (before _make_roster shuffles)
+                random.seed(seed + roster_counter)
+
+                # Assign random model to each player slot
                 if n_agents <= len(models):
                     assigned = random.sample(models, n_agents)
                 else:
@@ -228,16 +352,14 @@ def generate_rosters(
 
                 # Challenger filter: skip if challenger not in assigned models
                 if challenger and challenger not in assigned:
+                    roster_counter += 1
                     continue
 
                 for agent, model in zip(agents, assigned):
                     agent["agent_model"] = model
 
-                random.shuffle(agents)
-                name_pool = NAME_POOL.copy()
-                random.shuffle(name_pool)
-                for idx, agent in enumerate(agents):
-                    agent["name"] = name_pool[idx]
+                _make_roster(current_config, seed + roster_counter)
+                roster_counter += 1
 
                 with open(file_path, "w") as f:
                     json.dump(current_config, f, indent=4)
@@ -284,10 +406,10 @@ if __name__ == "__main__":
         default=[
             "gpt-4o-mini",
             "gpt-4o",
-            "custom/qwen/qwen3.5-35b-a3b@http://127.0.0.1:1234/v1",
-            "custom/google/gemma-3-27b@http://127.0.0.1:1234/v1",
-            "custom/qwen/qwen3-4b-2507@http://127.0.0.1:1234/v1",
-            "custom/qwen2.5-3b-instruct@http://127.0.0.1:1234/v1",
+            "custom/Qwen/Qwen3-32B@http://localhost:8002/v1",
+            "custom/google/gemma-3-27b-it@http://localhost:8003/v1",
+            "custom/Qwen/Qwen3-4B-Instruct-2507@http://localhost:8001/v1",
+            "custom/Qwen/Qwen2.5-3B-Instruct@http://localhost:8000/v1",
         ],
         help="List of models to compete",
     )
@@ -314,6 +436,35 @@ if __name__ == "__main__":
         default="v2",
         help="Subdirectory under experiments/rosters/ for this run (default: v2)",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Random seed for reproducible roster generation (default: 42)",
+    )
+    parser.add_argument(
+        "--reflection-file",
+        type=str,
+        default="",
+        help="Path to reflection text file to inject into agent prompts",
+    )
+    parser.add_argument(
+        "--reflect-team",
+        type=str,
+        default="",
+        help="Team name that receives the reflection (e.g., 'Werewolves', 'Villagers')",
+    )
+    parser.add_argument(
+        "--reflect-model",
+        type=str,
+        default="",
+        help="Model substring that receives reflection (e.g., 'Qwen', 'gpt-5'). Combined with --reflect-team if both set.",
+    )
+    parser.add_argument(
+        "--no-swap",
+        action="store_true",
+        help="For 2-model team games: don't swap sides. models[0] always plays team 1, models[1] team 2.",
+    )
 
     args = parser.parse_args()
 
@@ -324,4 +475,9 @@ if __name__ == "__main__":
         overwrite=args.overwrite,
         challenger=args.challenger,
         roster_dir=args.roster_dir,
+        seed=args.seed,
+        reflection_file=args.reflection_file,
+        reflect_team=args.reflect_team,
+        reflect_model=args.reflect_model,
+        no_swap=args.no_swap,
     )
