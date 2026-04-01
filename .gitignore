@@ -172,3 +172,4 @@ examples/experimental/negotiation_arena/redis-data/*
 logs/*
 experiments/rosters/*
 experiments/results/*
+CLAUDE.md

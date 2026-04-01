@@ -1,0 +1,3150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Elo Leaderboard</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        background-color: #ffffff;
+        color: #333;
+        margin: 0;
+        padding: 40px;
+      }
+      h1 {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 20px;
+      }
+      h1::before {
+        content: "🏆";
+        font-size: 32px;
+      }
+      h2 {
+        font-size: 20px;
+        font-weight: 600;
+        margin-top: 40px;
+        margin-bottom: 15px;
+        color: #444;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #888;
+        margin: 10px 0 5px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-left: 4px solid #ccc;
+        padding-left: 10px;
+      }
+      .section-divider {
+        margin: 60px 0 30px;
+        border-top: 2px dashed #eee;
+        padding-top: 30px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1px solid #f0f0f0;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      th {
+        text-align: left;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #666;
+        padding: 12px 16px;
+        background-color: #f9f9f9;
+        border-bottom: 1px solid #eee;
+      }
+      td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f5f5f5;
+        vertical-align: middle;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      .rank {
+        width: 60px;
+        font-weight: 700;
+        color: #555;
+        font-size: 16px;
+      }
+      .model-cell {
+        display: flex;
+        flex-direction: column;
+      }
+      .model-name {
+        font-weight: 700;
+        font-size: 15px;
+        color: #000;
+      }
+      .model-provider {
+        font-size: 11px;
+        color: #888;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 2px;
+      }
+      .elo {
+        font-weight: 700;
+        font-size: 15px;
+        width: 80px;
+      }
+      .elo-split {
+        font-weight: 500;
+        font-size: 14px;
+        width: 100px;
+        color: #666;
+      }
+      .win-rate {
+        font-weight: 700;
+        font-size: 15px;
+        width: 100px;
+      }
+      .matches {
+        font-weight: 500;
+        font-size: 14px;
+        width: 80px;
+        text-align: right;
+        color: #666;
+      }
+      .footer {
+        margin-top: 50px;
+        font-size: 13px;
+        color: #888;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+      }
+      .provider-icon {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #ddd;
+        display: inline-block;
+      }
+      /* Rank Colors */
+      tr:nth-child(1) .rank {
+        color: #d4af37;
+      }
+      tr:nth-child(2) .rank {
+        color: #c0c0c0;
+      }
+      tr:nth-child(3) .rank {
+        color: #cd7f32;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Social Games Tournament Results</h1>
+
+    <h3>⚔️ Competitive Games</h3>
+
+    <div class="leaderboard-section">
+      <h2>Competitive Overall Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th>ELO-Alt (Wolf/Spy)</th>
+            <th>ELO-Main (Vil/Civ)</th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1265</td>
+
+            <td class="elo-split">1166</td>
+            <td class="elo-split">1191</td>
+
+            <td class="win-rate" style="color: hsl(64, 70%, 40%)">53.7%</td>
+            <td class="matches">307</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1255</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(54, 70%, 40%)">45.8%</td>
+            <td class="matches">306</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1201</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(50, 70%, 40%)">41.7%</td>
+            <td class="matches">302</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1193</td>
+
+            <td class="elo-split">1208</td>
+            <td class="elo-split">1233</td>
+
+            <td class="win-rate" style="color: hsl(77, 70%, 40%)">64.2%</td>
+            <td class="matches">307</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1160</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(37, 70%, 40%)">31.5%</td>
+            <td class="matches">310</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1124</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(44, 70%, 40%)">37.4%</td>
+            <td class="matches">314</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Bargaining Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1332</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(96, 70%, 40%)">80.0%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1259</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(79, 70%, 40%)">66.7%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1234</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(68, 70%, 40%)">56.7%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1218</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(55, 70%, 40%)">46.7%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1177</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">978</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(8, 70%, 40%)">6.7%</td>
+            <td class="matches">30</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Centipede Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1332</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(92, 70%, 40%)">76.7%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1291</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(84, 70%, 40%)">70.0%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1216</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(68, 70%, 40%)">56.7%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1187</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(52, 70%, 40%)">43.3%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1092</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(32, 70%, 40%)">26.7%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1080</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(32, 70%, 40%)">26.7%</td>
+            <td class="matches">30</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Chameleon Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th>ELO-Alt (Wolf/Spy)</th>
+            <th>ELO-Main (Vil/Civ)</th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1303</td>
+
+            <td class="elo-split">1294</td>
+            <td class="elo-split">1105</td>
+
+            <td class="win-rate" style="color: hsl(66, 70%, 40%)">55.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1295</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(66, 70%, 40%)">55.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1220</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(60, 70%, 40%)">50.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1153</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(54, 70%, 40%)">45.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1143</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1083</td>
+
+            <td class="elo-split">1294</td>
+            <td class="elo-split">1105</td>
+
+            <td class="win-rate" style="color: hsl(66, 70%, 40%)">55.0%</td>
+            <td class="matches">20</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Chicken Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1421</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(111, 70%, 40%)">93.3%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1352</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(92, 70%, 40%)">76.7%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1275</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(75, 70%, 40%)">63.3%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1098</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(36, 70%, 40%)">30.0%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1070</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(36, 70%, 40%)">30.0%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">981</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(8, 70%, 40%)">6.7%</td>
+            <td class="matches">30</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Coup Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1228</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">5</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1220</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(39, 70%, 40%)">33.3%</td>
+            <td class="matches">3</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1198</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(30, 70%, 40%)">25.0%</td>
+            <td class="matches">4</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1196</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(24, 70%, 40%)">20.0%</td>
+            <td class="matches">5</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1191</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(30, 70%, 40%)">25.0%</td>
+            <td class="matches">4</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1165</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(0, 70%, 40%)">0.0%</td>
+            <td class="matches">3</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Dead Last Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1283</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(36, 70%, 40%)">30.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1235</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(36, 70%, 40%)">30.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1206</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(24, 70%, 40%)">20.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1182</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(24, 70%, 40%)">20.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1166</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(12, 70%, 40%)">10.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1126</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(12, 70%, 40%)">10.0%</td>
+            <td class="matches">6</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Insider Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th>ELO-Alt (Wolf/Spy)</th>
+            <th>ELO-Main (Vil/Civ)</th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1383</td>
+
+            <td class="elo-split">1294</td>
+            <td class="elo-split">1294</td>
+
+            <td class="win-rate" style="color: hsl(78, 70%, 40%)">65.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1223</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1189</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(36, 70%, 40%)">30.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1135</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(30, 70%, 40%)">25.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1135</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(36, 70%, 40%)">30.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1133</td>
+
+            <td class="elo-split">1105</td>
+            <td class="elo-split">1105</td>
+
+            <td class="win-rate" style="color: hsl(54, 70%, 40%)">45.0%</td>
+            <td class="matches">20</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Liars Dice Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1256</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(90, 70%, 40%)">75.0%</td>
+            <td class="matches">4</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1241</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(79, 70%, 40%)">66.7%</td>
+            <td class="matches">3</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1208</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(39, 70%, 40%)">33.3%</td>
+            <td class="matches">3</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1148</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(0, 70%, 40%)">0.0%</td>
+            <td class="matches">4</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1145</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(0, 70%, 40%)">0.0%</td>
+            <td class="matches">4</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Minority Game Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1285</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(60, 70%, 40%)">50.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1239</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(60, 70%, 40%)">50.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1216</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(54, 70%, 40%)">45.8%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1213</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(50, 70%, 40%)">41.7%</td>
+            <td class="matches">3</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1157</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(39, 70%, 40%)">33.3%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1088</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(0, 70%, 40%)">0.0%</td>
+            <td class="matches">3</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Prisoners Dilemma Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1428</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(111, 70%, 40%)">93.3%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1261</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(72, 70%, 40%)">60.0%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1193</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(52, 70%, 40%)">43.3%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1151</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(43, 70%, 40%)">36.7%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1108</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(39, 70%, 40%)">33.3%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1056</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(19, 70%, 40%)">16.7%</td>
+            <td class="matches">30</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Public Goods Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1281</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(66, 70%, 40%)">55.6%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1240</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(60, 70%, 40%)">50.0%</td>
+            <td class="matches">4</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1209</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(39, 70%, 40%)">33.3%</td>
+            <td class="matches">4</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1208</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(39, 70%, 40%)">33.3%</td>
+            <td class="matches">2</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1157</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(19, 70%, 40%)">16.7%</td>
+            <td class="matches">4</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1102</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(0, 70%, 40%)">0.0%</td>
+            <td class="matches">4</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Resistance Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th>ELO-Alt (Wolf/Spy)</th>
+            <th>ELO-Main (Vil/Civ)</th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1413</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1372</td>
+
+            <td class="elo-split">1167</td>
+            <td class="elo-split">1075</td>
+
+            <td class="win-rate" style="color: hsl(84, 70%, 40%)">70.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1320</td>
+
+            <td class="elo-split">1324</td>
+            <td class="elo-split">1232</td>
+
+            <td class="win-rate" style="color: hsl(66, 70%, 40%)">55.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1232</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(72, 70%, 40%)">60.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">932</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">929</td>
+
+            <td class="elo-split">1200</td>
+            <td class="elo-split">1200</td>
+
+            <td class="win-rate" style="color: hsl(42, 70%, 40%)">35.0%</td>
+            <td class="matches">20</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Rock Paper Scissors Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1341</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(96, 70%, 40%)">80.0%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1312</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(84, 70%, 40%)">70.0%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1196</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(64, 70%, 40%)">53.3%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1193</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(52, 70%, 40%)">43.3%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1134</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1021</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(16, 70%, 40%)">13.3%</td>
+            <td class="matches">30</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Sheriff Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1274</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(64, 70%, 40%)">53.3%</td>
+            <td class="matches">5</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1256</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(79, 70%, 40%)">66.7%</td>
+            <td class="matches">2</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1236</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">5</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1163</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(26, 70%, 40%)">22.2%</td>
+            <td class="matches">3</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1144</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(19, 70%, 40%)">16.7%</td>
+            <td class="matches">4</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1124</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(16, 70%, 40%)">13.3%</td>
+            <td class="matches">5</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Skull Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1233</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(19, 70%, 40%)">16.7%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1202</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(0, 70%, 40%)">0.0%</td>
+            <td class="matches">4</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1202</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(0, 70%, 40%)">0.0%</td>
+            <td class="matches">4</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1192</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(0, 70%, 40%)">0.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1185</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(0, 70%, 40%)">0.0%</td>
+            <td class="matches">1</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1184</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(0, 70%, 40%)">0.0%</td>
+            <td class="matches">3</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Spyfall Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1328</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(90, 70%, 40%)">75.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1308</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(72, 70%, 40%)">60.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1200</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(60, 70%, 40%)">50.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1136</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1113</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(42, 70%, 40%)">35.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1111</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">20</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Survivor Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1298</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(60, 70%, 40%)">50.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1287</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1250</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1231</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1081</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(12, 70%, 40%)">10.0%</td>
+            <td class="matches">6</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1051</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(0, 70%, 40%)">0.0%</td>
+            <td class="matches">6</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Undercover Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1404</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(90, 70%, 40%)">75.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1302</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(66, 70%, 40%)">55.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1280</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1221</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1127</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(84, 70%, 40%)">70.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">864</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(24, 70%, 40%)">20.0%</td>
+            <td class="matches">20</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Werewolves Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>ELO</th>
+
+            <th></th>
+            <th></th>
+
+            <th>Win Rate</th>
+            <th style="text-align: right">Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">🥇</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o-mini</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1525</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(90, 70%, 40%)">75.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥈</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">gpt-4o</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> OpenAI</span
+                >
+              </div>
+            </td>
+            <td class="elo">1406</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(90, 70%, 40%)">75.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">🥉</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Gemma3-27B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Unknown</span
+                >
+              </div>
+            </td>
+            <td class="elo">1192</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(60, 70%, 40%)">50.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#4</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-4B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1077</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(42, 70%, 40%)">35.0%</td>
+            <td class="matches">20</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#5</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen3-32B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">1006</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(48, 70%, 40%)">40.0%</td>
+            <td class="matches">30</td>
+          </tr>
+
+          <tr>
+            <td class="rank">#6</td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">Qwen2.5-3B</span>
+                <span class="model-provider"
+                  ><span class="provider-icon"></span> Alibaba</span
+                >
+              </div>
+            </td>
+            <td class="elo">991</td>
+
+            <td class="elo-split" style="color: #ccc">-</td>
+            <td class="elo-split" style="color: #ccc">-</td>
+
+            <td class="win-rate" style="color: hsl(30, 70%, 40%)">25.0%</td>
+            <td class="matches">20</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-divider">
+      <h3>🤝 Cooperative / Coordination Games</h3>
+      <p style="color: #888; font-size: 13px; margin-bottom: 20px">
+        These games test coordination ability rather than competitive skill. ELO
+        here reflects how well a model navigates coordination under conflicting
+        preferences.
+      </p>
+
+      <div class="leaderboard-section">
+        <h2>Cooperative Overall Leaderboard</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Model</th>
+              <th>Win Rate</th>
+              <th style="text-align: right">Matches</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="rank">🥇</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">gpt-4o</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> OpenAI</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(70, 70%, 40%)">58.3%</td>
+              <td class="matches">32</td>
+            </tr>
+
+            <tr>
+              <td class="rank">🥈</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">Qwen2.5-3B</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> Alibaba</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(64, 70%, 40%)">53.3%</td>
+              <td class="matches">35</td>
+            </tr>
+
+            <tr>
+              <td class="rank">🥉</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">Qwen3-4B</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> Alibaba</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(58, 70%, 40%)">48.7%</td>
+              <td class="matches">33</td>
+            </tr>
+
+            <tr>
+              <td class="rank">#4</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">gpt-4o-mini</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> OpenAI</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(39, 70%, 40%)">33.3%</td>
+              <td class="matches">36</td>
+            </tr>
+
+            <tr>
+              <td class="rank">#5</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">Qwen3-32B</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> Alibaba</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(37, 70%, 40%)">31.0%</td>
+              <td class="matches">34</td>
+            </tr>
+
+            <tr>
+              <td class="rank">#6</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">Gemma3-27B</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> Unknown</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(28, 70%, 40%)">23.8%</td>
+              <td class="matches">34</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="leaderboard-section">
+        <h2>Battle Of The Sexes Leaderboard</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Model</th>
+              <th>Win Rate</th>
+              <th style="text-align: right">Matches</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="rank">🥇</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">Qwen3-4B</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> Alibaba</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(75, 70%, 40%)">63.3%</td>
+              <td class="matches">30</td>
+            </tr>
+
+            <tr>
+              <td class="rank">🥈</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">gpt-4o</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> OpenAI</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(68, 70%, 40%)">56.7%</td>
+              <td class="matches">30</td>
+            </tr>
+
+            <tr>
+              <td class="rank">🥉</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">gpt-4o-mini</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> OpenAI</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(55, 70%, 40%)">46.7%</td>
+              <td class="matches">30</td>
+            </tr>
+
+            <tr>
+              <td class="rank">#4</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">Qwen2.5-3B</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> Alibaba</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(55, 70%, 40%)">46.7%</td>
+              <td class="matches">30</td>
+            </tr>
+
+            <tr>
+              <td class="rank">#5</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">Qwen3-32B</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> Alibaba</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(43, 70%, 40%)">36.7%</td>
+              <td class="matches">30</td>
+            </tr>
+
+            <tr>
+              <td class="rank">#6</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">Gemma3-27B</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> Unknown</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(32, 70%, 40%)">26.7%</td>
+              <td class="matches">30</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="leaderboard-section">
+        <h2>Stag Hunt Leaderboard</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Model</th>
+              <th>Win Rate</th>
+              <th style="text-align: right">Matches</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="rank">🥇</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">Qwen2.5-3B</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> Alibaba</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(79, 70%, 40%)">66.7%</td>
+              <td class="matches">5</td>
+            </tr>
+
+            <tr>
+              <td class="rank">🥈</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">gpt-4o</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> OpenAI</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(79, 70%, 40%)">66.7%</td>
+              <td class="matches">2</td>
+            </tr>
+
+            <tr>
+              <td class="rank">🥉</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">Qwen3-32B</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> Alibaba</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(19, 70%, 40%)">16.7%</td>
+              <td class="matches">4</td>
+            </tr>
+
+            <tr>
+              <td class="rank">#4</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">Gemma3-27B</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> Unknown</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(19, 70%, 40%)">16.7%</td>
+              <td class="matches">4</td>
+            </tr>
+
+            <tr>
+              <td class="rank">#5</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">gpt-4o-mini</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> OpenAI</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(13, 70%, 40%)">11.1%</td>
+              <td class="matches">6</td>
+            </tr>
+
+            <tr>
+              <td class="rank">#6</td>
+              <td>
+                <div class="model-cell">
+                  <span class="model-name">Qwen3-4B</span>
+                  <span class="model-provider"
+                    ><span class="provider-icon"></span> Alibaba</span
+                  >
+                </div>
+              </td>
+              <td class="win-rate" style="color: hsl(0, 70%, 40%)">0.0%</td>
+              <td class="matches">3</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p><strong>Metrics Explanation:</strong></p>
+      <ul>
+        <li>
+          <strong>ELO:</strong> Rating computed from pairwise comparisons within
+          each game category.
+        </li>
+        <li>
+          <strong>ELO-Alt:</strong> Rating as the minority/hidden role
+          (Werewolf, Spy, Undercover).
+        </li>
+        <li>
+          <strong>ELO-Main:</strong> Rating as the majority role (Villager,
+          Non-Spy, Civilian).
+        </li>
+        <li>
+          <strong>Win Rate:</strong> Fraction of pairwise comparisons won (~50%
+          expected for equal competition).
+        </li>
+        <li>
+          Cooperative games (Battle of the Sexes, Stag Hunt) are excluded from
+          the competitive ELO.
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>
