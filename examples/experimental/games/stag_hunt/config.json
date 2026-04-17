@@ -6,7 +6,6 @@
     },
     "role_secrets": {},
     "max_rounds": 10,
-    "threshold": 45,
     "initial_state": "Choose",
     "state_transition": {
         "Choose": "Choose"

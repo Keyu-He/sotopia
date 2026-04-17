@@ -1,14 +1,14 @@
 # Skull (Skull & Roses)
 
 ## Overview
-Skull is a pure psychological bluffing game with no luck element. Players take turns placing face-down discs — roses (safe) or a skull (dangerous). Once placing begins, any player can switch to bidding, claiming they can safely flip a certain number of discs across all players' stacks. The highest bidder must then flip that many discs, starting with their own. If they flip a skull, they lose a disc permanently. First to win 2 rounds wins the game.
+Skull is a pure psychological bluffing game with no luck element. Players take turns placing face-down discs — roses (safe) or a skull (dangerous). Once placing begins, any player can switch to bidding, claiming they can safely flip a certain number of discs across all players' stacks. The highest bidder must then flip that many discs, starting with their own. If they flip a skull, they lose a disc permanently. First to win 1 round wins the game.
 
 ## Players
 - Number of players: 4 (Alice, Bob, Charlie, Diana)
 - Roles: All players are symmetric "Player" roles.
 
 ## Objective
-Win 2 rounds before your opponents, or be the last player remaining (others eliminated by losing all their discs).
+Be the first player to win 1 round, or be the last player remaining (others eliminated by losing all their discs).
 
 ## How to Play
 Each round has three phases:
@@ -27,22 +27,14 @@ Each round has three phases:
 - To flip: `flip NAME` to reveal the top disc of NAME's stack.
 - **Rose revealed:** Continue flipping.
 - **Skull revealed:** Round is lost. The bidder permanently loses 1 random disc from their hand.
-- **All N discs are roses:** The bidder wins the round (gains 1 round win toward the 2 needed).
+- **All N discs are roses:** The bidder wins the round (1 win needed to win the game).
 
 After each round, discs are returned to hands and a new round begins. A player with 0 discs is eliminated.
 
 ## Scoring / Payoffs
-- First player to win 2 rounds: +1.0
+- First player to win 1 round (or last player with discs): +1.0
 - Other players: -1.0
 - If max turns reached: player with most round wins wins (+1.0)
-
-## Our Settings
-- Number of players: 4
-- Starting discs per player: 4 (3 roses + 1 skull)
-- Wins needed: 2
-- Max turns: 120
-- Action order: round-robin for Place/Bid, bidder-only for Flip
-- Models: gpt-4o for all agents
 
 ## Social Skills Tested
 - **Psychological bluffing:** Placing a skull to trap a bidder who bids high.

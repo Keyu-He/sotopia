@@ -8,7 +8,7 @@ Survivor is a social strategy game inspired by the TV show. Players form allianc
 - Roles: All players are symmetric "Player" roles with no hidden information.
 
 ## Objective
-Survive to the final round and win the jury vote. You must balance making allies (to avoid being voted out) against managing your reputation with those you vote out (who will judge you at the end).
+Survive to the final round (last 3 standing). You must balance making allies (to avoid being voted out) against managing your reputation with those you vote out (who will judge you at the end).
 
 ## How to Play
 **Elimination phase (repeat until 2-3 survivors remain):**
@@ -20,14 +20,10 @@ Survive to the final round and win the jury vote. You must balance making allies
 4. **Jury Vote:** Each jury member votes for which finalist should win. Highest jury votes wins.
 
 ## Scoring / Payoffs
-- Winner of jury vote: +1.0
-- Runner-up finalists: 0.0 (or -1.0 depending on configuration)
-- Eliminated players: -1.0
+- All finalists (reaching the final 3): +1.0
+- Eliminated players (joining the jury): -1.0
 
-## Our Settings
-- Action order: round-robin for discussion/plea, simultaneous for votes
-- Models: gpt-4o for all agents
-- Final phase triggered when 2-3 players remain
+The jury vote determines the narrative winner, but all finalists receive the +1.0 reward. This means surviving to the finals is what matters most for scoring.
 
 ## Social Skills Tested
 - **Alliance formation:** Building coalitions to protect yourself while targeting others.

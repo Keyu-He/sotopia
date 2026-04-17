@@ -188,7 +188,7 @@ class InsiderActionHandler(ActionHandler):
             # Check if the question aligns with a fact
             keywords = [w for w in question_lower.split() if len(w) > 3]
             matches = sum(1 for kw in keywords if kw in fact_lower)
-            if matches >= 2:
+            if matches >= 1:
                 # Question seems related to a true fact
                 if any(
                     neg in question_lower

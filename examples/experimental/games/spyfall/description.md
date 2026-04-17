@@ -26,12 +26,6 @@ Each round alternates between two phases:
 - Winning team/player: +1.0
 - Losing team/player: -1.0
 
-## Our Settings
-- Location: "Space Station"
-- Spy does not know the location; Non-Spies do
-- Action order: round-robin for questioning, simultaneous for vote
-- Models: gpt-4o for all agents
-
 ## Social Skills Tested
 - **Deception:** The Spy must ask believable questions about a location they don't know.
 - **Inference:** Non-Spies must identify who is asking suspiciously generic questions.

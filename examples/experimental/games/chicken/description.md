@@ -8,13 +8,13 @@ Chicken (also called Hawk-Dove) is a game of brinkmanship. Two players each choo
 - Roles: Both players are symmetric "Player" roles.
 
 ## Objective
-Maximize your own score over 10 rounds. You need at least 35 total points to have a chance at winning; otherwise both players lose (draw).
+Maximize your own score over 10 rounds. Higher total score wins.
 
 ## How to Play
 1. Each round, both players simultaneously choose `swerve` or `straight`.
 2. No speaking is allowed — only actions.
 3. Points are awarded based on the combination of choices (see payoffs below).
-4. After 10 rounds, whoever has more total points wins (provided threshold is met).
+4. After 10 rounds, whoever has more total points wins.
 
 ## Scoring / Payoffs
 Per round payoffs (Player 1, Player 2):
@@ -23,16 +23,8 @@ Per round payoffs (Player 1, Player 2):
 - Both straight: 0 each (crash!)
 
 Win conditions:
-- If both score < 35 total: Draw (both lose)
-- Otherwise: Higher scorer wins (+1.0), lower scorer loses (-1.0)
-- Tied with both ≥ 35: Draw (0.0)
-
-## Our Settings
-- Max rounds: 10
-- Win threshold: 35 points
-- Action order: simultaneous
-- No speaking allowed
-- Models: gpt-4o for all agents
+- Higher scorer wins (+1.0), lower loses (-1.0)
+- Tied scores: Draw (0.0 each)
 
 ## Social Skills Tested
 - **Brinkmanship:** Committing credibly to going straight to force the opponent to swerve.

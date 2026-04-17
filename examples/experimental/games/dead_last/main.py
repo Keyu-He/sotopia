@@ -308,7 +308,7 @@ class DeadLastEnv(SocialDeductionGame):
                     scores = {}
                     for name in self.agents:
                         if self.agent_alive.get(name, False):
-                            scores[name] = 1.0
+                            scores[name] = agreed_split.get(name, 0) / 100.0
                         else:
                             scores[name] = -1.0
 

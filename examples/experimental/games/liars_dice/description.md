@@ -28,14 +28,6 @@ Be the last player with at least one die remaining. Eliminate opponents by catch
 - Eliminated players: complete_rating = -1.0
 - If max turns reached: player with most dice wins (+1.0), others lose (-1.0)
 
-## Our Settings
-- Number of players: 3
-- Starting dice per player: 5
-- Dice faces: 1 through 6
-- Max turns: 100
-- Action order: round-robin
-- Models: gpt-4o for all agents
-
 ## Social Skills Tested
 - **Bluffing:** Making believable bids even when your dice are unfavorable.
 - **Probabilistic reasoning:** Estimating the likelihood a bid is valid given your own dice.

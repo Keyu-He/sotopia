@@ -8,14 +8,14 @@ Stag Hunt is a cooperation and trust game. Players must decide whether to hunt a
 - Roles: All players are symmetric "Player" roles.
 
 ## Objective
-Maximize your own score over 10 rounds. You need at least 45 total points to have a chance at winning; otherwise everyone loses (draw).
+Maximize your own score over 10 rounds. Top half of players by score win; bottom half lose.
 
 ## How to Play
 1. Each round, all 4 players simultaneously choose `stag` or `hare`.
 2. No speaking is allowed — only actions.
 3. If ALL 4 players choose stag: each gets 5 points.
 4. If anyone chooses hare: stag hunters get 0, hare hunters each get 2.
-5. After 10 rounds, whoever has the most total points wins (provided threshold is met).
+5. After 10 rounds, players are ranked by cumulative score; top half wins, bottom half loses.
 
 ## Scoring / Payoffs
 Per round:
@@ -23,17 +23,9 @@ Per round:
 - Any hare chosen: hare hunters get 2, stag hunters get 0
 
 Win conditions:
-- If ALL players score < 45 total: Draw (everyone loses)
-- Otherwise: Highest scorer wins (+1.0), others lose (-1.0)
-- All tied: Draw (0.0)
-
-## Our Settings
-- Max rounds: 10
-- Win threshold: 45 points
-- Number of players: 4
-- Action order: simultaneous
-- No speaking allowed
-- Models: gpt-4o for all agents
+- Top half of players by score: +1.0
+- Bottom half: -1.0
+- All tied: Draw (0.0 each)
 
 ## Social Skills Tested
 - **Trust:** Relying on all other players to cooperate, knowing one defection ruins it.

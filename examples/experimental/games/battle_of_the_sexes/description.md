@@ -8,13 +8,14 @@ Battle of the Sexes is a classic coordination game where two players prefer diff
 - Roles: Both players are "Player" roles, but they have opposite preferences (Alice prefers opera, Bob prefers football).
 
 ## Objective
-Maximize your own score over 10 rounds. You need at least 28 total points to have a chance at winning; otherwise both players lose (draw).
+Maximize your own score over 10 rounds. Higher total score wins.
 
 ## How to Play
-1. Each round, both players simultaneously choose `opera` or `football`.
-2. No speaking is allowed — only actions.
-3. Points are awarded based on the combination of choices (see payoffs below).
-4. After 10 rounds, whoever has more total points wins (provided at least one player reached 28).
+1. Each round has two phases:
+   - **Discuss**: Players take turns speaking to negotiate which venue to attend.
+   - **Choose**: Players simultaneously and privately choose `opera` or `football`.
+2. Points are awarded based on the combination of choices (see payoffs below).
+3. After 10 rounds, the player with the higher total score wins.
 
 ## Scoring / Payoffs
 Per round payoffs (Alice, Bob):
@@ -23,18 +24,10 @@ Per round payoffs (Alice, Bob):
 - One opera, one football: 0 each (miscoordination)
 
 Win conditions:
-- If both score < 28 total: Draw (both lose)
-- Otherwise: Higher scorer wins (+1.0), lower scorer loses (-1.0)
-- Tied with both ≥ 28: Draw (0.0)
-
-## Our Settings
-- Max rounds: 10
-- Win threshold: 28 points
-- Action order: simultaneous
-- No speaking allowed
-- Models: gpt-4o for all agents
+- Higher scorer wins (+1.0), lower loses (-1.0)
+- Tied scores: Draw (0.0 each)
 
 ## Social Skills Tested
 - **Coordination:** Aligning on the same event despite differing preferences.
+- **Negotiation:** Using the discussion phase to convince the other player.
 - **Compromise:** Learning to alternate between preferred outcomes across rounds.
-- **Implicit communication:** Signaling intent through repeated choices without explicit speech.

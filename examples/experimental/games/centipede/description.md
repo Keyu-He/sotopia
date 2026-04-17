@@ -8,15 +8,15 @@ The Centipede Game is a sequential bargaining game with a "growing pot." Two pla
 - Roles: Both players are symmetric "Player" roles, alternating turns.
 
 ## Objective
-Maximize your cumulative score across 3 games. The player with the higher total wins.
+Maximize your cumulative score across 4 games. First mover alternates each game, so each player starts twice. The player with the higher total wins.
 
 ## How to Play
-1. Players play 3 independent games of Centipede.
+1. Players play 4 independent games of Centipede. First mover alternates each game.
 2. In each game, the current active player chooses `take` or `pass`.
 3. `take`: The game ends immediately. Both players receive the payoff for the current node.
 4. `pass`: The pot structure changes to the next node (with different payoffs), and the other player gets their turn.
 5. The game also ends if all 6 nodes are passed through (players receive the pass-through payoff).
-6. Cumulative payoffs across all 3 games determine the winner.
+6. Cumulative payoffs across all 4 games determine the winner.
 
 ## Scoring / Payoffs
 Node payoffs (Player 1, Player 2) if "take" is chosen at that node:
@@ -30,13 +30,6 @@ Node payoffs (Player 1, Player 2) if "take" is chosen at that node:
 
 Win conditions:
 - Higher cumulative score wins (+1.0), lower loses (-1.0), tied = draw (0.0)
-
-## Our Settings
-- Number of games: 3
-- Nodes per game: 6
-- Pass-through payoff: (24, 16)
-- Action order: sequential (alternating)
-- Models: gpt-4o for all agents
 
 ## Social Skills Tested
 - **Trust:** Deciding whether to risk passing and trusting the opponent to eventually stop.

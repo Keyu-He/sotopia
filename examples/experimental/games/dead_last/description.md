@@ -26,16 +26,8 @@ Survive to the final round and negotiate the largest share of the 100-point priz
 ## Scoring / Payoffs
 - Eliminated players: -1.0 reward
 - Final survivors:
-  - If split agreed: each gets their proposed/agreed share
+  - If split agreed: each gets their agreed share / 100 (e.g., 34 points → +0.34)
   - If split fails: 0.0 (no reward)
-
-## Our Settings
-- Starting players: 6 (Alice, Bob, Charlie, Diana, Eve, Frank)
-- Final negotiation triggered at 2-3 survivors
-- Prize pool: 100 points to split
-- Discussion: round-robin speaking
-- Vote: simultaneous
-- Models: gpt-4o for all agents
 
 ## Social Skills Tested
 - **Coalition formation:** Building alliances to direct majority votes.

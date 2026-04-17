@@ -10,7 +10,6 @@
         "straight": {"swerve": [5, 1], "straight": [0, 0]}
     },
     "max_rounds": 10,
-    "threshold": 35,
     "initial_state": "Choose",
     "state_transition": {
         "Choose": "Choose"

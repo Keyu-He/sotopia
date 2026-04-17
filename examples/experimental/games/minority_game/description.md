@@ -8,14 +8,14 @@ The Minority Game, inspired by the El Farol Bar problem, is a multi-player anti-
 - Roles: All players are symmetric "Player" roles with no special information.
 
 ## Objective
-Maximize your own cumulative score over 12 rounds. You need at least 15 total points to have a chance at winning; otherwise everyone loses (draw).
+Maximize your own cumulative score over 12 rounds. The top half of players (by score) win, the bottom half lose.
 
 ## How to Play
 1. Each round, all 5 players simultaneously choose `go` or `stay`.
 2. No speaking is allowed — only actions.
-3. The minority group (fewer than half = fewer than 2.5 players, i.e., 0 or 1 out of 5 choosing the same option) wins 3 points each.
+3. The minority group (fewer than half of all players, i.e., 0, 1, or 2 out of 5 choosing the same option) wins 3 points each.
 4. The majority group scores 0 for that round.
-5. After 12 rounds, whoever has the most total points wins (if threshold is met).
+5. After 12 rounds, players are ranked by cumulative score; top half wins, bottom half loses.
 
 ## Scoring / Payoffs
 Per round:
@@ -23,19 +23,10 @@ Per round:
 - Players in the majority group: 0 points
 
 Win conditions:
-- If ALL players score < 15 total: Draw (everyone loses)
-- Otherwise: Highest scorer wins (+1.0), others lose (-1.0)
-- All tied: Draw (0.0)
-
-## Our Settings
-- Max rounds: 12
-- Win threshold: 15 points
-- Number of players: 5
-- Minority threshold: fewer than 2.5 (i.e., 0 or 1 out of 5)
-- Points per winning round: 3
-- Action order: simultaneous
-- No speaking allowed
-- Models: gpt-4o for all agents
+- Top half of players by score: +1.0
+- Bottom half: -1.0
+- Middle (if odd number of players): 0.0
+- All tied: Draw (0.0 each)
 
 ## Social Skills Tested
 - **Anti-coordination:** Unlike most games where you want to match the group, here you must predict and avoid the majority choice.

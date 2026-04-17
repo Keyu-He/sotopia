@@ -34,15 +34,6 @@ After 4 rounds, total gold determines the winner.
 - Lowest gold total: -1.0 reward
 - Middle players: 0.0
 
-## Our Settings
-- Number of players: 4
-- Total rounds: 4 (each player is Sheriff once)
-- Honest value: 3 gold
-- Smuggle value: 8 gold
-- Inspect honest penalty (to Sheriff): 2 gold
-- Inspect smuggle penalty (from Merchant): 4 gold
-- Models: gpt-4o for all agents
-
 ## Social Skills Tested
 - **Bluffing:** Smugglers must convince the Sheriff they packed honestly.
 - **Negotiation:** Bribing and deal-making during the Negotiate phase.

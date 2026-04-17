@@ -25,14 +25,6 @@ Insider is a cooperative deduction game with a hidden saboteur. The whole group 
 - Word guessed + Insider identified (majority vote): Citizens win (+1.0), Insider loses (-1.0)
 - Word guessed + Insider NOT identified: Insider wins (+1.0), Citizens lose (-1.0)
 
-## Our Settings
-- Number of players: 5 (Alice=Insider, Bob/Charlie/Diana/Eve=Citizens)
-- Secret word: "kangaroo"
-- Category: animal
-- Max questions: 15
-- The environment automatically answers yes/no based on known facts about the word
-- Models: gpt-4o for all agents
-
 ## Social Skills Tested
 - **Subtle guidance:** The Insider must help without being too obvious about knowing the answer.
 - **Deduction:** Citizens must narrow down the word with efficient yes/no questions.

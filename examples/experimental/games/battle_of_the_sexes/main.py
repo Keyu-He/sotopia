@@ -217,7 +217,7 @@ def create_environment(
         env_profile=env_profile,
         config=config,
         model_name=model_name,
-        evaluators=[BattleOfSexesEvaluator(max_turn_number=35)],
+        evaluators=[BattleOfSexesEvaluator(max_turn_number=50)],
         terminal_evaluators=[],
         hide_unknown=True,
     )

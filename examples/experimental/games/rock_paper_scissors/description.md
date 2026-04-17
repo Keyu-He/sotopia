@@ -24,12 +24,6 @@ Per round:
 
 Final rewards: Winner gets +1.0, loser gets -1.0, tie gives 0.0 each.
 
-## Our Settings
-- Max rounds: 10
-- Action order: simultaneous
-- No speaking allowed
-- Models: gpt-4o for all agents
-
 ## Social Skills Tested
 - **Pattern recognition:** Detecting and exploiting opponent tendencies over repeated play.
 - **Randomization:** Avoiding exploitable patterns in your own choices.

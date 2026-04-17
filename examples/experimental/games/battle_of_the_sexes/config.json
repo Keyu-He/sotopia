@@ -10,7 +10,6 @@
         "football": {"opera": [0, 0], "football": [2, 3]}
     },
     "max_rounds": 10,
-    "threshold": 28,
     "initial_state": "Discuss",
     "state_transition": {
         "Discuss": "Choose",

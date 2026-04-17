@@ -32,13 +32,6 @@ The game alternates between Night and Day cycles:
 - Villager team wins (all Werewolves eliminated): +1.0 for Villagers/Seer/Witch, -1.0 for Werewolves
 - Werewolf team wins (Werewolves ≥ remaining Villagers): +1.0 for Werewolves, -1.0 for Villagers/Seer/Witch
 
-## Our Settings
-- Players: 6 (2 Villagers, 2 Werewolves, 1 Seer, 1 Witch)
-- Night actions are hidden from non-relevant roles
-- Day discussion: round-robin speaking, one round
-- Day vote: simultaneous
-- Models: gpt-4o for all agents
-
 ## Social Skills Tested
 - **Deception:** Werewolves must argue convincingly that they are Villagers.
 - **Accusation and defense:** Players must justify suspicions and counter accusations.

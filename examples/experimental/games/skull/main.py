@@ -47,23 +47,80 @@ _env_logger = logging.getLogger("sotopia.envs.social_game")
 
 
 class SkullEvaluator(SocialGameEndEvaluator):
+    """Evaluator that checks Skull win conditions.
+
+    Uses the _check_win_conditions pattern (same as WerewolfGameEndEvaluator)
+    so the base-class __call__/__acall__ pipeline works correctly with the
+    engine's evaluator aggregation.
+    """
+
+    def _check_win_conditions(  # type: ignore[override]
+        self, env: Any, turn_number: int, messages: List[Tuple[str, Message]]
+    ) -> Tuple[bool, str, Dict[str, float]]:
+        """Check if game has ended based on Skull win conditions."""
+        # 1. Check if _end_game() already flagged the game as over
+        if env.internal_state.get("game_over"):
+            final_scores: Dict[str, float] = env.internal_state.get("final_scores", {})
+            reason: str = env.internal_state.get("end_reason", "Game over")
+            return True, reason, final_scores
+
+        # 2. Check round wins
+        round_wins = env.internal_state.get("round_wins", {})
+        wins_needed = env._config.get("wins_needed", 2)
+        winner = None
+        for name, wins in round_wins.items():
+            if wins >= wins_needed:
+                winner = name
+                break
+
+        # 3. Last-player-standing
+        alive = [n for n in env.agents if env.agent_alive.get(n, False)]
+        if not winner and len(alive) == 1:
+            winner = alive[0]
+
+        if winner:
+            losers = [n for n in env.agents if n != winner]
+            loser_score = -1.0 / len(losers) if losers else 0.0
+            rewards: Dict[str, float] = {}
+            for name in env.agents:
+                rewards[name] = 1.0 if name == winner else loser_score
+            win_reason = f"Game over! {winner} wins! Round wins: {round_wins}"
+            return True, win_reason, rewards
+
+        return False, "", {}
+
     def __call__(
         self, turn_number: int, messages: List[Tuple[str, Message]], **kwargs: Any
     ) -> List[Tuple[str, Tuple[Tuple[str, int | float | bool], str]]]:
-        env = kwargs.get("env")
-        if env and env.internal_state.get("game_over", False):
-            scores = env.internal_state.get("final_scores", {})
-            reason = env.internal_state.get("end_reason", "Game over")
-            response: List[Tuple[str, Tuple[Tuple[str, int | float | bool], str]]] = [
-                ("environment", (("terminated", True), reason))
-            ]
-            for idx, name in enumerate(env.agents):
-                score = scores.get(name, 0.0)
-                response.append((f"agent_{idx + 1}", (("complete_rating", score), "")))
-            return response
+        # Check turn limit first
         if turn_number >= self.max_turn_number:
-            return [("environment", (("terminated", True), "Timeout"))]
-        return [("environment", (("terminated", False), ""))]
+            return [("environment", (("terminated", True), "Max turns reached"))]
+
+        # Extract environment from kwargs
+        env = kwargs.get("env")
+        if not env:
+            return [("environment", (("terminated", False), ""))]
+
+        # Check game-specific win conditions
+        terminated, reason, rewards = self._check_win_conditions(
+            env, turn_number, messages
+        )
+
+        response: List[Tuple[str, Tuple[Tuple[str, int | float | bool], str]]] = [
+            ("environment", (("terminated", terminated), reason))
+        ]
+
+        if terminated and rewards:
+            agent_names = list(env.agents)
+            for agent_name, reward in rewards.items():
+                try:
+                    idx = agent_names.index(agent_name)
+                    generic_key = f"agent_{idx + 1}"
+                    response.append((generic_key, (("complete_rating", reward), "")))
+                except ValueError:
+                    continue
+
+        return response
 
 
 # ============================================================================
@@ -181,18 +238,37 @@ class SkullActionHandler(ActionHandler):
             if bid_match:
                 bid_val = int(bid_match.group(1))
                 current_bid = env.internal_state.get("current_bid", 0)
-                if bid_val > current_bid:
-                    total_discs = sum(
-                        len(env.internal_state["placed"].get(n, []))
-                        for n in env.agents
-                        if env.agent_alive.get(n, False)
+                total_discs = sum(
+                    len(env.internal_state["placed"].get(n, []))
+                    for n in env.agents
+                    if env.agent_alive.get(n, False)
+                )
+                if bid_val > total_discs:
+                    # Impossible bid — treat as pass
+                    env.internal_state["bid_passed"].add(agent_name)
+                    env.recv_message(
+                        "Environment",
+                        SimpleMessage(
+                            message=f"[Bid] {agent_name} bid {bid_val}, which exceeds "
+                            f"the {total_discs} discs on table. Counted as a pass."
+                        ),
                     )
-                    bid_val = min(bid_val, total_discs)
+                elif bid_val > current_bid:
                     env.internal_state["current_bid"] = bid_val
                     env.internal_state["current_bidder"] = agent_name
                     env.recv_message(
                         "Environment",
                         SimpleMessage(message=f"[Bid] {agent_name} bids {bid_val}!"),
+                    )
+                else:
+                    # Bid not higher — also treat as pass
+                    env.internal_state["bid_passed"].add(agent_name)
+                    env.recv_message(
+                        "Environment",
+                        SimpleMessage(
+                            message=f"[Bid] {agent_name} bid {bid_val}, not higher than "
+                            f"current bid {current_bid}. Counted as a pass."
+                        ),
                     )
             elif "pass" in arg:
                 env.internal_state["bid_passed"].add(agent_name)

@@ -26,14 +26,6 @@ The Chameleon is a social deduction game where all players except one (the Chame
 - Citizens win: all Citizens get +1.0, Chameleon gets -1.0
 - Chameleon wins: Chameleon gets +1.0, all Citizens get -1.0
 
-## Our Settings
-- Number of players: 5 (Alice=Chameleon, Bob/Charlie/Diana/Eve=Citizens)
-- Category: Fruits
-- Secret word: Banana
-- Possible word list: Apple, Banana, Cherry, Grape, Mango, Orange, Peach, Strawberry, Watermelon, Pineapple, Blueberry, Kiwi
-- Action order: round-robin for clues/discussion, simultaneous for voting
-- Models: gpt-4o for all agents
-
 ## Social Skills Tested
 - **Deception:** The Chameleon must give a clue that sounds word-specific without actually knowing the word.
 - **Theory of mind:** Citizens must infer whether a clue was truly word-specific or a lucky guess.

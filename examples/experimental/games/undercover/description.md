@@ -26,13 +26,6 @@ Each round alternates between two phases:
 - Winning team members: +1.0
 - Losing team members: -1.0
 
-## Our Settings
-- Number of players: 6 (4 Civilians, 2 Undercovers)
-- Civilian word: "Cat"
-- Undercover word: "Dog"
-- Action order: round-robin for description, simultaneous for vote
-- Models: gpt-4o for all agents
-
 ## Social Skills Tested
 - **Deception:** Undercovers must describe a different word while sounding like they know the majority word.
 - **Inference:** Civilians must detect which descriptions are slightly "off."

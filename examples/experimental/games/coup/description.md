@@ -33,14 +33,6 @@ Each turn, the active player declares an action. Other players respond:
 - Winner (last player standing): +1.0
 - Eliminated players: -1.0
 
-## Our Settings
-- Number of players: 4
-- Starting influence cards: 2 per player
-- Starting coins: 2 per player
-- Card types: Duke, Assassin, Captain, Ambassador, Contessa
-- Max turns: defined by game end condition (last player standing)
-- Models: gpt-4o for all agents
-
 ## Social Skills Tested
 - **Bluffing:** Claiming cards you don't have to access powerful actions.
 - **Challenge timing:** Knowing when the odds favor challenging vs. letting an action slide.

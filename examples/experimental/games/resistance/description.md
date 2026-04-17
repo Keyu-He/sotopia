@@ -25,16 +25,10 @@ The game cycles through mission rounds until 3 missions succeed or 3 missions fa
    - All succeed cards = mission succeeds.
 
 ## Scoring / Payoffs
-- 3 missions succeed: Resistance wins (+1.0), Spies lose (-1.0)
-- 3 missions fail: Spies win (+1.0), Resistance loses (-1.0)
-- 5 consecutive proposal rejections: Spies win (+1.0), Resistance loses (-1.0)
-
-## Our Settings
-- Players: 5 (Alice/Bob/Charlie=Resistance, Diana/Eve=Spies)
-- Mission sizes: [2, 3, 2, 3, 3]
-- Max missions: 5
-- Action order: round-robin for discussion, simultaneous for votes/execution
-- Models: gpt-4o for all agents
+Team total reward is +1.0 (winning team) / -1.0 (losing team), split equally among team members.
+- 3 missions succeed: Resistance wins (+1/3 each), Spies lose (-1/2 each)
+- 3 missions fail: Spies win (+1/2 each), Resistance loses (-1/3 each)
+- 5 consecutive proposal rejections: Spies win (+1/2 each), Resistance loses (-1/3 each)
 
 ## Social Skills Tested
 - **Deception:** Spies must vote approve on good teams and argue convincingly to avoid suspicion.

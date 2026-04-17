@@ -26,15 +26,6 @@ Win conditions:
 - Top 2 earners: +1.0 reward
 - Bottom 2 earners: -1.0 reward
 
-## Our Settings
-- Max rounds: 10
-- Pool multiplier: 1.5x
-- Tokens per round: 10
-- Number of players: 4
-- Action order: simultaneous
-- Contributions revealed after each round
-- Models: gpt-4o for all agents
-
 ## Social Skills Tested
 - **Free-riding:** Benefiting from others' contributions while contributing little yourself.
 - **Punishment and reputation:** Whether players punish low contributors in subsequent rounds by reducing their own contributions.
